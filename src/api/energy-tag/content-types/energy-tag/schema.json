@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "energy_tags",
+  "info": {
+    "singularName": "energy-tag",
+    "pluralName": "energy-tags",
+    "displayName": "Tag_Energy",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "Energy_Amount": {
+      "type": "string"
+    },
+    "episodes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::episode.episode",
+      "mappedBy": "tag_energy"
+    }
+  }
+}

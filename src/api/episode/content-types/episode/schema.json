@@ -1,0 +1,90 @@
+{
+  "kind": "collectionType",
+  "collectionName": "episodes",
+  "info": {
+    "singularName": "episode",
+    "pluralName": "episodes",
+    "displayName": "Episodes",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "EpisodeTitle": {
+      "type": "string",
+      "required": true
+    },
+    "EpisodeSlug": {
+      "type": "uid",
+      "targetField": "EpisodeTitle",
+      "required": true
+    },
+    "BroadcastDateTime": {
+      "type": "datetime",
+      "required": true,
+      "unique": true
+    },
+    "EpisodeImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "SoundcloudUploadLink": {
+      "type": "string",
+      "required": true
+    },
+    "EpisodeTracklist": {
+      "type": "blocks"
+    },
+    "EpisodeDescription": {
+      "type": "text"
+    },
+    "StaffPick": {
+      "type": "boolean"
+    },
+    "StaffCommentEpisode": {
+      "type": "blocks"
+    },
+    "link_episode_to_show": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::show.show",
+      "inversedBy": "Show_Episodes"
+    },
+    "guest_artists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::artist.artist",
+      "mappedBy": "episodes_guest_featured"
+    },
+    "tag_energy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::energy-tag.energy-tag",
+      "inversedBy": "episodes"
+    },
+    "tag_genres": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag",
+      "inversedBy": "episodes"
+    },
+    "tag_mood_vibes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::mood-vibe-tag.mood-vibe-tag",
+      "inversedBy": "episodes"
+    },
+    "tag_actions": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag-action.tag-action",
+      "mappedBy": "episodes"
+    }
+  }
+}

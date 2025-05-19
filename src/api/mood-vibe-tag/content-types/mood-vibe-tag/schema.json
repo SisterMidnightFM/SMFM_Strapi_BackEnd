@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "mood_vibe_tags",
+  "info": {
+    "singularName": "mood-vibe-tag",
+    "pluralName": "mood-vibe-tags",
+    "displayName": "Tag_MoodVibe",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "Mood_or_Vibe": {
+      "type": "string"
+    },
+    "episodes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::episode.episode",
+      "mappedBy": "tag_mood_vibes"
+    }
+  }
+}

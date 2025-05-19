@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tags",
+  "info": {
+    "singularName": "tag",
+    "pluralName": "tags",
+    "displayName": "Tag_Genre",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "Genre": {
+      "type": "string"
+    },
+    "episodes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::episode.episode",
+      "mappedBy": "tag_genres"
+    }
+  }
+}

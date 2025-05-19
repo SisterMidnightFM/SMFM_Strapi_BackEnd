@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tag_actions",
+  "info": {
+    "singularName": "tag-action",
+    "pluralName": "tag-actions",
+    "displayName": "Tag_Action"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "Tag_Action": {
+      "type": "string",
+      "required": true
+    },
+    "episodes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::episode.episode",
+      "inversedBy": "tag_actions"
+    }
+  }
+}

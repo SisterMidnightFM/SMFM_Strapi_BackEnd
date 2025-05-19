@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "shows",
+  "info": {
+    "singularName": "show",
+    "pluralName": "shows",
+    "displayName": "Shows",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ShowName": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "ShowSlug": {
+      "type": "uid",
+      "targetField": "ShowName",
+      "required": true
+    },
+    "ShowDescription": {
+      "type": "blocks",
+      "required": false
+    },
+    "ShowImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "StaffComments": {
+      "type": "blocks",
+      "private": true
+    },
+    "Show_Episodes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::episode.episode",
+      "mappedBy": "link_episode_to_show"
+    },
+    "Main_Host": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::artist.artist",
+      "mappedBy": "Main_host"
+    },
+    "Show_Instagram": {
+      "type": "string"
+    }
+  }
+}
