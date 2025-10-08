@@ -10,6 +10,7 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {},
   "attributes": {
     "ShowName": {
       "type": "string",
@@ -20,6 +21,77 @@
       "type": "uid",
       "targetField": "ShowName",
       "required": true
+    },
+    "Broadcast_IsRepeat": {
+      "type": "boolean"
+    },
+    "Broadcast_Day": {
+      "type": "enumeration",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "Broadcast_IsRepeat"
+            },
+            true
+          ]
+        }
+      },
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ]
+    },
+    "Broadcast_Time": {
+      "type": "integer",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "Broadcast_IsRepeat"
+            },
+            true
+          ]
+        }
+      },
+      "min": 1,
+      "max": 12
+    },
+    "Broadcast_AmPm": {
+      "type": "enumeration",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "Broadcast_IsRepeat"
+            },
+            true
+          ]
+        }
+      },
+      "enum": [
+        "am",
+        "pm"
+      ]
+    },
+    "Broadcast_RepeatEvery_Weeks": {
+      "type": "integer",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "Broadcast_IsRepeat"
+            },
+            true
+          ]
+        }
+      },
+      "default": 4
     },
     "ShowDescription": {
       "type": "blocks",
@@ -51,6 +123,12 @@
       "mappedBy": "Main_host"
     },
     "Show_Instagram": {
+      "type": "string"
+    },
+    "WebLink1": {
+      "type": "string"
+    },
+    "WebLink2": {
       "type": "string"
     }
   }

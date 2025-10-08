@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "newsplural",
+  "info": {
+    "singularName": "news",
+    "pluralName": "newsplural",
+    "displayName": "News"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "News_Slug": {
+      "type": "uid",
+      "targetField": "News_Title",
+      "required": true
+    },
+    "News_Title": {
+      "type": "string",
+      "required": true
+    },
+    "News_Text": {
+      "type": "richtext",
+      "required": true
+    },
+    "CoverImage": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "Additional_Images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

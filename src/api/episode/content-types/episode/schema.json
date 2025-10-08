@@ -10,6 +10,7 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {},
   "attributes": {
     "EpisodeTitle": {
       "type": "string",
@@ -34,21 +35,37 @@
         "files"
       ]
     },
-    "SoundcloudUploadLink": {
+    "SoundcloudLink": {
       "type": "string",
       "required": true
+    },
+    "MixCloudLink": {
+      "type": "string",
+      "required": true,
+      "unique": true
     },
     "EpisodeTracklist": {
       "type": "blocks"
     },
     "EpisodeDescription": {
-      "type": "text"
+      "type": "text",
+      "required": true
     },
     "StaffPick": {
       "type": "boolean"
     },
-    "StaffCommentEpisode": {
-      "type": "blocks"
+    "StaffPickComments": {
+      "type": "string",
+      "conditions": {
+        "visible": {
+          "==": [
+            {
+              "var": "StaffPick"
+            },
+            true
+          ]
+        }
+      }
     },
     "link_episode_to_show": {
       "type": "relation",
@@ -84,6 +101,12 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::tag-action.tag-action",
+      "mappedBy": "episodes"
+    },
+    "tag_themes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag-theme.tag-theme",
       "mappedBy": "episodes"
     }
   }

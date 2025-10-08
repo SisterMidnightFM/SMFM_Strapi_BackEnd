@@ -203,6 +203,63 @@ export interface AdminRole extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface AdminSession extends Struct.CollectionTypeSchema {
+  collectionName: 'strapi_sessions';
+  info: {
+    description: 'Session Manager storage';
+    displayName: 'Session';
+    name: 'Session';
+    pluralName: 'sessions';
+    singularName: 'session';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+    'content-type-builder': {
+      visible: false;
+    };
+    i18n: {
+      localized: false;
+    };
+  };
+  attributes: {
+    absoluteExpiresAt: Schema.Attribute.DateTime & Schema.Attribute.Private;
+    childId: Schema.Attribute.String & Schema.Attribute.Private;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    deviceId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+    expiresAt: Schema.Attribute.DateTime &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'admin::session'> &
+      Schema.Attribute.Private;
+    origin: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    sessionId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.Unique;
+    status: Schema.Attribute.String & Schema.Attribute.Private;
+    type: Schema.Attribute.String & Schema.Attribute.Private;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    userId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface AdminTransferToken extends Struct.CollectionTypeSchema {
   collectionName: 'strapi_transfer_tokens';
   info: {
@@ -385,9 +442,10 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    Artist_PhoneNumber: Schema.Attribute.String & Schema.Attribute.Private;
     Artist_Slug: Schema.Attribute.UID<'ArtistName'> & Schema.Attribute.Required;
     ArtistBio: Schema.Attribute.Text;
-    ArtistEmail: Schema.Attribute.Email;
+    ArtistEmail: Schema.Attribute.Email & Schema.Attribute.Private;
     ArtistImage: Schema.Attribute.Media<'images' | 'files'>;
     ArtistInstagram: Schema.Attribute.String;
     ArtistName: Schema.Attribute.String & Schema.Attribute.Required;
@@ -407,7 +465,7 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     Main_host: Schema.Attribute.Relation<'manyToMany', 'api::show.show'>;
     publishedAt: Schema.Attribute.DateTime;
-    Real_Name: Schema.Attribute.String;
+    Real_Name: Schema.Attribute.String & Schema.Attribute.Private;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -462,7 +520,7 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    EpisodeDescription: Schema.Attribute.Text;
+    EpisodeDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     EpisodeImage: Schema.Attribute.Media<'images' | 'files'>;
     EpisodeSlug: Schema.Attribute.UID<'EpisodeTitle'> &
       Schema.Attribute.Required;
@@ -482,10 +540,13 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       'api::episode.episode'
     > &
       Schema.Attribute.Private;
+    MixCloudLink: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     publishedAt: Schema.Attribute.DateTime;
-    SoundcloudUploadLink: Schema.Attribute.String & Schema.Attribute.Required;
-    StaffCommentEpisode: Schema.Attribute.Blocks;
+    SoundcloudLink: Schema.Attribute.String & Schema.Attribute.Required;
     StaffPick: Schema.Attribute.Boolean;
+    StaffPickComments: Schema.Attribute.String;
     tag_actions: Schema.Attribute.Relation<
       'manyToMany',
       'api::tag-action.tag-action'
@@ -498,6 +559,10 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     tag_mood_vibes: Schema.Attribute.Relation<
       'manyToMany',
       'api::mood-vibe-tag.mood-vibe-tag'
+    >;
+    tag_themes: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tag-theme.tag-theme'
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -535,6 +600,35 @@ export interface ApiMoodVibeTagMoodVibeTag extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiNewsNews extends Struct.CollectionTypeSchema {
+  collectionName: 'newsplural';
+  info: {
+    displayName: 'News';
+    pluralName: 'newsplural';
+    singularName: 'news';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Additional_Images: Schema.Attribute.Media<'images', true>;
+    CoverImage: Schema.Attribute.Media<'images', true>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::news.news'> &
+      Schema.Attribute.Private;
+    News_Slug: Schema.Attribute.UID<'News_Title'> & Schema.Attribute.Required;
+    News_Text: Schema.Attribute.RichText & Schema.Attribute.Required;
+    News_Title: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiShowShow extends Struct.CollectionTypeSchema {
   collectionName: 'shows';
   info: {
@@ -547,6 +641,29 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    Broadcast_AmPm: Schema.Attribute.Enumeration<['am', 'pm']>;
+    Broadcast_Day: Schema.Attribute.Enumeration<
+      [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ]
+    >;
+    Broadcast_IsRepeat: Schema.Attribute.Boolean;
+    Broadcast_RepeatEvery_Weeks: Schema.Attribute.Integer &
+      Schema.Attribute.DefaultTo<4>;
+    Broadcast_Time: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 12;
+          min: 1;
+        },
+        number
+      >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -570,6 +687,8 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    WebLink1: Schema.Attribute.String;
+    WebLink2: Schema.Attribute.String;
   };
 }
 
@@ -596,6 +715,35 @@ export interface ApiTagActionTagAction extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     Tag_Action: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTagThemeTagTheme extends Struct.CollectionTypeSchema {
+  collectionName: 'tag_themes';
+  info: {
+    displayName: 'Tag_Theme';
+    pluralName: 'tag-themes';
+    singularName: 'tag-theme';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    episodes: Schema.Attribute.Relation<'manyToMany', 'api::episode.episode'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::tag-theme.tag-theme'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    Theme: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1135,6 +1283,7 @@ declare module '@strapi/strapi' {
       'admin::api-token-permission': AdminApiTokenPermission;
       'admin::permission': AdminPermission;
       'admin::role': AdminRole;
+      'admin::session': AdminSession;
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
@@ -1142,8 +1291,10 @@ declare module '@strapi/strapi' {
       'api::energy-tag.energy-tag': ApiEnergyTagEnergyTag;
       'api::episode.episode': ApiEpisodeEpisode;
       'api::mood-vibe-tag.mood-vibe-tag': ApiMoodVibeTagMoodVibeTag;
+      'api::news.news': ApiNewsNews;
       'api::show.show': ApiShowShow;
       'api::tag-action.tag-action': ApiTagActionTagAction;
+      'api::tag-theme.tag-theme': ApiTagThemeTagTheme;
       'api::tag.tag': ApiTagTag;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

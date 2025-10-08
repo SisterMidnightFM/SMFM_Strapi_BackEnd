@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tag_themes",
+  "info": {
+    "singularName": "tag-theme",
+    "pluralName": "tag-themes",
+    "displayName": "Tag_Theme"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Theme": {
+      "type": "string"
+    },
+    "episodes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::episode.episode",
+      "inversedBy": "tag_themes"
+    }
+  }
+}
