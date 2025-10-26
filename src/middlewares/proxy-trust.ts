@@ -19,9 +19,19 @@ export default (config, { strapi }) => {
       const forwardedProto = ctx.request.headers['x-forwarded-proto'];
 
       if (forwardedProto === 'https') {
-        // Override the protocol to be recognized as HTTPS
-        ctx.request.secure = true;
-        ctx.request.protocol = 'https';
+        // Override the protocol by modifying the underlying properties
+        Object.defineProperty(ctx.request, 'secure', {
+          get: function () {
+            return true;
+          },
+          configurable: true,
+        });
+        Object.defineProperty(ctx.request, 'protocol', {
+          get: function () {
+            return 'https';
+          },
+          configurable: true,
+        });
       }
     }
 
