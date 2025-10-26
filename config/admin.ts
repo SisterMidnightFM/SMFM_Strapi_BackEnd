@@ -17,6 +17,5 @@ export default ({ env }) => ({
     nps: env.bool('FLAG_NPS', true),
     promoteEE: env.bool('FLAG_PROMOTE_EE', true),
   },
-  url: env('URL', 'http://localhost:1337/admin'),
   forceAdminSSL: env.bool('IS_PROXIED', false),
 });
