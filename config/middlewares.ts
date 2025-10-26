@@ -1,6 +1,8 @@
 export default ({ env }) => [
   'strapi::logger',
   'strapi::errors',
+  // Custom middleware to trust proxy headers and force HTTPS when proxied
+  'global::proxy-trust',
   'strapi::security',
   'strapi::cors',
   'strapi::poweredBy',
