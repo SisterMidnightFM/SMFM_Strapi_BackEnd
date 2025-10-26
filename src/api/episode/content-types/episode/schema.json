@@ -47,6 +47,11 @@
     "EpisodeTracklist": {
       "type": "blocks"
     },
+    "Tracklist": {
+      "type": "component",
+      "component": "tracks.track-list",
+      "repeatable": true
+    },
     "EpisodeDescription": {
       "type": "text",
       "required": true
@@ -79,12 +84,6 @@
       "target": "api::artist.artist",
       "mappedBy": "episodes_guest_featured"
     },
-    "tag_energy": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::energy-tag.energy-tag",
-      "inversedBy": "episodes"
-    },
     "tag_genres": {
       "type": "relation",
       "relation": "manyToMany",
@@ -96,12 +95,6 @@
       "relation": "manyToMany",
       "target": "api::mood-vibe-tag.mood-vibe-tag",
       "inversedBy": "episodes"
-    },
-    "tag_actions": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::tag-action.tag-action",
-      "mappedBy": "episodes"
     },
     "tag_themes": {
       "type": "relation",

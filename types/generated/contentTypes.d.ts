@@ -430,6 +430,34 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAboutPageAboutPage extends Struct.CollectionTypeSchema {
+  collectionName: 'about_pages';
+  info: {
+    displayName: 'About Page';
+    pluralName: 'about-pages';
+    singularName: 'about-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    AboutPageText: Schema.Attribute.Blocks;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::about-page.about-page'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
   collectionName: 'artists';
   info: {
@@ -450,6 +478,7 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
     ArtistInstagram: Schema.Attribute.String;
     ArtistName: Schema.Attribute.String & Schema.Attribute.Required;
     ArtistWebsite: Schema.Attribute.String;
+    blogs_written: Schema.Attribute.Relation<'manyToMany', 'api::news.news'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -466,36 +495,10 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
     Main_host: Schema.Attribute.Relation<'manyToMany', 'api::show.show'>;
     publishedAt: Schema.Attribute.DateTime;
     Real_Name: Schema.Attribute.String & Schema.Attribute.Private;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
-export interface ApiEnergyTagEnergyTag extends Struct.CollectionTypeSchema {
-  collectionName: 'energy_tags';
-  info: {
-    description: '';
-    displayName: 'Tag_Energy';
-    pluralName: 'energy-tags';
-    singularName: 'energy-tag';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    Energy_Amount: Schema.Attribute.String;
-    episodes: Schema.Attribute.Relation<'oneToMany', 'api::episode.episode'>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::energy-tag.energy-tag'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
+    tag_locations: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tag-location.tag-location'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -547,14 +550,6 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     SoundcloudLink: Schema.Attribute.String & Schema.Attribute.Required;
     StaffPick: Schema.Attribute.Boolean;
     StaffPickComments: Schema.Attribute.String;
-    tag_actions: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::tag-action.tag-action'
-    >;
-    tag_energy: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::energy-tag.energy-tag'
-    >;
     tag_genres: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
     tag_mood_vibes: Schema.Attribute.Relation<
       'manyToMany',
@@ -564,6 +559,7 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::tag-theme.tag-theme'
     >;
+    Tracklist: Schema.Attribute.Component<'tracks.track-list', true>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -603,7 +599,7 @@ export interface ApiMoodVibeTagMoodVibeTag extends Struct.CollectionTypeSchema {
 export interface ApiNewsNews extends Struct.CollectionTypeSchema {
   collectionName: 'newsplural';
   info: {
-    displayName: 'News';
+    displayName: 'Blog';
     pluralName: 'newsplural';
     singularName: 'news';
   };
@@ -612,6 +608,7 @@ export interface ApiNewsNews extends Struct.CollectionTypeSchema {
   };
   attributes: {
     Additional_Images: Schema.Attribute.Media<'images', true>;
+    artists: Schema.Attribute.Relation<'manyToMany', 'api::artist.artist'>;
     CoverImage: Schema.Attribute.Media<'images', true>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -623,6 +620,37 @@ export interface ApiNewsNews extends Struct.CollectionTypeSchema {
     News_Text: Schema.Attribute.RichText & Schema.Attribute.Required;
     News_Title: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiScheduleSchedule extends Struct.CollectionTypeSchema {
+  collectionName: 'schedules';
+  info: {
+    displayName: 'Schedule';
+    pluralName: 'schedules';
+    singularName: 'schedule';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Date: Schema.Attribute.Date &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::schedule.schedule'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    Show_Slots: Schema.Attribute.Component<'show-slots.shows', true>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -692,29 +720,29 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiTagActionTagAction extends Struct.CollectionTypeSchema {
-  collectionName: 'tag_actions';
+export interface ApiTagLocationTagLocation extends Struct.CollectionTypeSchema {
+  collectionName: 'tag_locations';
   info: {
-    displayName: 'Tag_Action';
-    pluralName: 'tag-actions';
-    singularName: 'tag-action';
+    displayName: 'Tag_Location';
+    pluralName: 'tag-locations';
+    singularName: 'tag-location';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   attributes: {
+    artists: Schema.Attribute.Relation<'manyToMany', 'api::artist.artist'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    episodes: Schema.Attribute.Relation<'manyToMany', 'api::episode.episode'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::tag-action.tag-action'
+      'api::tag-location.tag-location'
     > &
       Schema.Attribute.Private;
+    Location: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    Tag_Action: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1287,13 +1315,14 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::about-page.about-page': ApiAboutPageAboutPage;
       'api::artist.artist': ApiArtistArtist;
-      'api::energy-tag.energy-tag': ApiEnergyTagEnergyTag;
       'api::episode.episode': ApiEpisodeEpisode;
       'api::mood-vibe-tag.mood-vibe-tag': ApiMoodVibeTagMoodVibeTag;
       'api::news.news': ApiNewsNews;
+      'api::schedule.schedule': ApiScheduleSchedule;
       'api::show.show': ApiShowShow;
-      'api::tag-action.tag-action': ApiTagActionTagAction;
+      'api::tag-location.tag-location': ApiTagLocationTagLocation;
       'api::tag-theme.tag-theme': ApiTagThemeTagTheme;
       'api::tag.tag': ApiTagTag;
       'plugin::content-releases.release': PluginContentReleasesRelease;

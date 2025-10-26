@@ -4,7 +4,7 @@
   "info": {
     "singularName": "news",
     "pluralName": "newsplural",
-    "displayName": "News"
+    "displayName": "Blog"
   },
   "options": {
     "draftAndPublish": true
@@ -37,6 +37,12 @@
       "allowedTypes": [
         "images"
       ]
+    },
+    "artists": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::artist.artist",
+      "mappedBy": "blogs_written"
     }
   }
 }

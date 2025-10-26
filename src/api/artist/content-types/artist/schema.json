@@ -63,6 +63,18 @@
     "Artist_PhoneNumber": {
       "type": "string",
       "private": true
+    },
+    "tag_locations": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag-location.tag-location",
+      "inversedBy": "artists"
+    },
+    "blogs_written": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::news.news",
+      "inversedBy": "artists"
     }
   }
 }

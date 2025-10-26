@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_show_slots_shows",
+  "info": {
+    "displayName": "Shows",
+    "icon": "music"
+  },
+  "options": {},
+  "attributes": {
+    "Show_Name": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::show.show"
+    },
+    "Start_Time": {
+      "type": "time"
+    },
+    "End_Time": {
+      "type": "time"
+    }
+  },
+  "config": {}
+}

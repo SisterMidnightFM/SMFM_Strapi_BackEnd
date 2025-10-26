@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_tracks_track_lists",
+  "info": {
+    "displayName": "TrackList",
+    "icon": "music"
+  },
+  "options": {},
+  "attributes": {
+    "Artist": {
+      "type": "string"
+    },
+    "Track_Title": {
+      "type": "string",
+      "required": false
+    }
+  },
+  "config": {}
+}

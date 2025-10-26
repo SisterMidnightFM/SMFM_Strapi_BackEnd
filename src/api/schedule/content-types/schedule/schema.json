@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "schedules",
+  "info": {
+    "singularName": "schedule",
+    "pluralName": "schedules",
+    "displayName": "Schedule"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Date": {
+      "type": "date",
+      "required": true,
+      "unique": true
+    },
+    "Show_Slots": {
+      "type": "component",
+      "component": "show-slots.shows",
+      "repeatable": true
+    }
+  }
+}
