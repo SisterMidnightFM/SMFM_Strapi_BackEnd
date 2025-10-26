@@ -1,20 +1,12 @@
-module.exports = [
+export default [
+  'strapi::logger',
   'strapi::errors',
   'strapi::security',
   'strapi::cors',
   'strapi::poweredBy',
-  'strapi::logger',
   'strapi::query',
   'strapi::body',
-  'strapi::session', // Add this
+  'strapi::session',
   'strapi::favicon',
   'strapi::public',
-  {
-    name: 'strapi::session',
-    config: {
-      cookie: {
-        secure: false, // 👈 allow cookies over HTTP
-      },
-    },
-  },
 ];
