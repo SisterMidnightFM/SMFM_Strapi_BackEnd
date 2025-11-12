@@ -44,9 +44,6 @@
       "required": true,
       "unique": true
     },
-    "EpisodeTracklist": {
-      "type": "blocks"
-    },
     "Tracklist": {
       "type": "component",
       "component": "tracks.track-list",

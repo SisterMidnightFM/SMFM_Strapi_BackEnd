@@ -528,7 +528,6 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     EpisodeSlug: Schema.Attribute.UID<'EpisodeTitle'> &
       Schema.Attribute.Required;
     EpisodeTitle: Schema.Attribute.String & Schema.Attribute.Required;
-    EpisodeTracklist: Schema.Attribute.Blocks;
     guest_artists: Schema.Attribute.Relation<
       'manyToMany',
       'api::artist.artist'
