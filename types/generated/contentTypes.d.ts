@@ -495,6 +495,10 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
     Main_host: Schema.Attribute.Relation<'manyToMany', 'api::show.show'>;
     publishedAt: Schema.Attribute.DateTime;
     Real_Name: Schema.Attribute.String & Schema.Attribute.Private;
+    Resident: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.DefaultTo<false>;
     tag_locations: Schema.Attribute.Relation<
       'manyToMany',
       'api::tag-location.tag-location'
@@ -517,7 +521,7 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    BroadcastDateTime: Schema.Attribute.DateTime &
+    BroadcastDateTime: Schema.Attribute.Date &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
     createdAt: Schema.Attribute.DateTime;
@@ -668,7 +672,6 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    Broadcast_AmPm: Schema.Attribute.Enumeration<['am', 'pm']>;
     Broadcast_Day: Schema.Attribute.Enumeration<
       [
         'Monday',
@@ -683,17 +686,10 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
     Broadcast_IsRepeat: Schema.Attribute.Boolean;
     Broadcast_RepeatEvery_Weeks: Schema.Attribute.Integer &
       Schema.Attribute.DefaultTo<4>;
-    Broadcast_Time: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 12;
-          min: 1;
-        },
-        number
-      >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    GoogleDriveFolder: Schema.Attribute.String & Schema.Attribute.Private;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::show.show'> &
       Schema.Attribute.Private;

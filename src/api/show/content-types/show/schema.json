@@ -47,38 +47,6 @@
         "Sunday"
       ]
     },
-    "Broadcast_Time": {
-      "type": "integer",
-      "conditions": {
-        "visible": {
-          "==": [
-            {
-              "var": "Broadcast_IsRepeat"
-            },
-            true
-          ]
-        }
-      },
-      "min": 1,
-      "max": 12
-    },
-    "Broadcast_AmPm": {
-      "type": "enumeration",
-      "conditions": {
-        "visible": {
-          "==": [
-            {
-              "var": "Broadcast_IsRepeat"
-            },
-            true
-          ]
-        }
-      },
-      "enum": [
-        "am",
-        "pm"
-      ]
-    },
     "Broadcast_RepeatEvery_Weeks": {
       "type": "integer",
       "conditions": {
@@ -130,6 +98,10 @@
     },
     "WebLink2": {
       "type": "string"
+    },
+    "GoogleDriveFolder": {
+      "type": "string",
+      "private": true
     }
   }
 }

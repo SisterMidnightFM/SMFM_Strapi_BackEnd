@@ -22,7 +22,7 @@
       "required": true
     },
     "BroadcastDateTime": {
-      "type": "datetime",
+      "type": "date",
       "required": true,
       "unique": true
     },

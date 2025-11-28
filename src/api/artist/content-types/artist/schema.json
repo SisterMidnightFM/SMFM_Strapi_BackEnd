@@ -16,6 +16,12 @@
       "type": "string",
       "required": true
     },
+    "Resident": {
+      "type": "boolean",
+      "private": true,
+      "required": true,
+      "default": false
+    },
     "ArtistEmail": {
       "type": "email",
       "private": true,
