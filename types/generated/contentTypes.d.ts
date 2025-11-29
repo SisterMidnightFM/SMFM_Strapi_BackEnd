@@ -521,15 +521,12 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    BroadcastDateTime: Schema.Attribute.Date &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
+    BroadcastDateTime: Schema.Attribute.Date & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     EpisodeDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     EpisodeImage: Schema.Attribute.Media<'images' | 'files'>;
-    EpisodeImageName: Schema.Attribute.String & Schema.Attribute.Private;
     EpisodeSlug: Schema.Attribute.UID<'EpisodeTitle'> &
       Schema.Attribute.Required;
     EpisodeTitle: Schema.Attribute.String & Schema.Attribute.Required;

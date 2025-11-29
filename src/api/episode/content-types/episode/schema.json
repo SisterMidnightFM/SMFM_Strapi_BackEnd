@@ -24,7 +24,7 @@
     "BroadcastDateTime": {
       "type": "date",
       "required": true,
-      "unique": true
+      "unique": false
     },
     "EpisodeImage": {
       "type": "media",
@@ -98,10 +98,6 @@
       "relation": "manyToMany",
       "target": "api::tag-theme.tag-theme",
       "mappedBy": "episodes"
-    },
-    "EpisodeImageName": {
-      "type": "string",
-      "private": true
     }
   }
 }
