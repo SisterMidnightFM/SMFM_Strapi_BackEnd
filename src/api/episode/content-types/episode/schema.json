@@ -98,6 +98,10 @@
       "relation": "manyToMany",
       "target": "api::tag-theme.tag-theme",
       "mappedBy": "episodes"
+    },
+    "EpisodeImageName": {
+      "type": "string",
+      "private": true
     }
   }
 }

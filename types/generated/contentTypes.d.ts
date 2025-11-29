@@ -529,6 +529,7 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     EpisodeDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     EpisodeImage: Schema.Attribute.Media<'images' | 'files'>;
+    EpisodeImageName: Schema.Attribute.String & Schema.Attribute.Private;
     EpisodeSlug: Schema.Attribute.UID<'EpisodeTitle'> &
       Schema.Attribute.Required;
     EpisodeTitle: Schema.Attribute.String & Schema.Attribute.Required;
