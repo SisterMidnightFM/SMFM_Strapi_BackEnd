@@ -87,12 +87,6 @@
       "target": "api::tag.tag",
       "inversedBy": "episodes"
     },
-    "tag_mood_vibes": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::mood-vibe-tag.mood-vibe-tag",
-      "inversedBy": "episodes"
-    },
     "tag_themes": {
       "type": "relation",
       "relation": "manyToMany",

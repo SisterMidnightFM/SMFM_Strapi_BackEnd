@@ -1,257 +1,203 @@
 /**
- * Bulk Link Artists to Shows Script (CSV-Based)
+ * Interactive Artist → Show Linking Script
  *
- * This script links artists to shows as main hosts by reading
- * mappings from a CSV file and matching by slugs.
+ * This script:
+ * - Finds shows with NO Main_Host linked
+ * - Suggests 7 matching artists using hybrid matching:
+ *      1. Substring match (ShowName contains ArtistName)
+ *      2. Levenshtein distance on slugs
+ *      3. Alphabetical fallback
+ * - Option 8: Enter Artist_Slug manually
+ * - Option 0: Skip
  *
- * Usage:
- *   1. Ensure "link artists to shows.csv" is in scripts/ folder
- *   2. Run: npx strapi console
+ * Supports:
+ * - DRY RUN: process.env.DRY_RUN = 'true'
+ * - TEST LIMIT: process.env.TEST_LIMIT = '5'
  *
- *   DRY RUN (test without making changes):
- *   process.env.DRY_RUN = 'true'
- *   await require('./scripts/link-artists-to-shows.js')(strapi)
- *
- *   TEST ON FIRST 5 SHOWS:
- *   process.env.TEST_LIMIT = '5'
- *   await require('./scripts/link-artists-to-shows.js')(strapi)
- *
- *   DRY RUN + TEST LIMIT:
- *   process.env.DRY_RUN = 'true'
- *   process.env.TEST_LIMIT = '5'
- *   await require('./scripts/link-artists-to-shows.js')(strapi)
- *
- *   FULL RUN:
- *   await require('./scripts/link-artists-to-shows.js')(strapi)
- *
- * Prerequisites:
- *   - CSV file must exist at scripts/link artists to shows.csv
- *   - Artists must exist in the database with matching Artist_Slug values
- *   - Shows must exist in the database with matching ShowSlug values
- *   - CSV must have ShowSlug and Artist_Slug columns
+ * Interactive usage:
+ * const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+ * await require('./scripts/link-artists-to-shows.js')(strapi, rl)
  */
 
-const fs = require('fs');
-const path = require('path');
-const { parse } = require('csv-parse/sync');
+const readline = require('readline');
 
-module.exports = async (strapi) => {
-  const DRY_RUN = process.env.DRY_RUN === 'true';
+// Simple slug function
+const createSlug = (str) =>
+  str
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+// Levenshtein distance
+function levenshtein(a, b) {
+  const m = [];
+
+  for (let i = 0; i <= b.length; i++) m[i] = [i];
+  for (let j = 0; j <= a.length; j++) m[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      m[i][j] =
+        b.charAt(i - 1) === a.charAt(j - 1)
+          ? m[i - 1][j - 1]
+          : Math.min(
+              m[i - 1][j - 1] + 1,
+              m[i][j - 1] + 1,
+              m[i - 1][j] + 1
+            );
+    }
+  }
+
+  return m[b.length][a.length];
+}
+
+module.exports = async (strapi, rl = null) => {
+  const DRY_RUN = process.env.DRY_RUN === "true";
   const TEST_LIMIT = process.env.TEST_LIMIT ? parseInt(process.env.TEST_LIMIT) : null;
+  const INTERACTIVE = rl !== null && !DRY_RUN;
 
-  console.log('\n🚀 Starting Artist → Show Linking Process...\n');
-  if (DRY_RUN) console.log('⚠️  DRY RUN MODE - No changes will be made\n');
-  if (TEST_LIMIT) console.log(`⚠️  TEST MODE - Processing only first ${TEST_LIMIT} shows\n`);
+  if (DRY_RUN) console.log("⚠️ DRY RUN ENABLED — No changes will be saved.");
+  if (INTERACTIVE) console.log("🤝 INTERACTIVE MODE ENABLED");
+  if (TEST_LIMIT) console.log(`⚠️ TEST LIMIT: Only processing first ${TEST_LIMIT} shows.`);
+
+  const ask = (q) =>
+    new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
 
   try {
-    // 1. Read and parse CSV file
-    console.log('📄 Reading CSV file...');
-    const csvPath = path.join(__dirname, 'link artists to shows.csv');
-
-    if (!fs.existsSync(csvPath)) {
-      console.error('❌ Error: CSV file not found at:', csvPath);
-      return { success: false, error: 'CSV file not found' };
-    }
-
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const records = parse(csvContent, {
-      columns: true,
-      skip_empty_lines: true
+    console.log("\n📥 Fetching artists...");
+    const allArtists = await strapi.db.query("api::artist.artist").findMany({
+      select: ["id", "ArtistName", "Artist_Slug"],
     });
 
-    // Create mapping: ShowSlug → Artist_Slug
-    const csvMapping = new Map();
-    records.forEach(record => {
-      if (record.ShowSlug && record.Artist_Slug) {
-        csvMapping.set(record.ShowSlug, record.Artist_Slug.trim());
-      }
-    });
+    console.log(`✓ Loaded ${allArtists.length} artists`);
 
-    console.log(`✓ Loaded ${csvMapping.size} show → artist mappings from CSV`);
-    console.log(`✓ Total records in CSV: ${records.length}\n`);
-
-    // 2. Fetch all artists and create lookup map by Artist_Slug
-    console.log('📥 Fetching artists from database...');
-    const allArtists = await strapi.db.query('api::artist.artist').findMany({
-      select: ['id', 'ArtistName', 'Artist_Slug']
-    });
-
-    // Create artist lookup map by Artist_Slug for O(1) access
     const artistMap = new Map();
-    allArtists.forEach(artist => {
-      artistMap.set(artist.Artist_Slug, artist);
+    allArtists.forEach((a) => artistMap.set(a.Artist_Slug, a));
+
+    console.log("\n📥 Fetching shows...");
+    let shows = await strapi.db.query("api::show.show").findMany({
+      select: ["id", "ShowName", "ShowSlug"],
+      populate: { Main_Host: true },
     });
 
-    console.log(`✓ Found ${allArtists.length} artists in database\n`);
+    // Keep only shows missing hosts
+    shows = shows.filter((s) => !s.Main_Host || s.Main_Host.length === 0);
 
-    if (allArtists.length === 0) {
-      console.log('⚠️  No artists found in database. Please create artists first.');
-      return { success: false, error: 'No artists in database' };
-    }
+    if (TEST_LIMIT) shows = shows.slice(0, TEST_LIMIT);
 
-    // 3. Fetch all shows from database
-    console.log('📥 Fetching shows from database...');
-    let allShows = await strapi.db.query('api::show.show').findMany({
-      select: ['id', 'ShowSlug', 'ShowName'],
-      populate: { Main_Host: true }
-    });
+    console.log(`✓ Found ${shows.length} shows with NO main host.\n`);
 
-    console.log(`✓ Found ${allShows.length} shows in database\n`);
+    let linked = 0;
+    let skipped = 0;
 
-    // Apply test limit if specified
-    if (TEST_LIMIT) {
-      allShows = allShows.slice(0, TEST_LIMIT);
-      console.log(`⚠️  Limited to first ${allShows.length} shows for testing\n`);
-    }
+    for (const show of shows) {
+      console.log("\n" + "─".repeat(80));
+      console.log(`📺 Show: ${show.ShowName}`);
 
-    // 4. Track statistics
-    let matched = 0;
-    let alreadyLinked = 0;
-    let noArtistSpecified = 0;
-    let artistNotFound = 0;
-    let errors = 0;
+      const showSlug = createSlug(show.ShowName);
 
-    const matchedPairs = [];
-    const notFoundArtists = [];
-    const skippedNoArtist = [];
+      // 1. Substring matches (highest priority)
+      const substringMatches = allArtists.filter((artist) =>
+        show.ShowName.toLowerCase().includes(artist.ArtistName.toLowerCase())
+      );
 
-    console.log('🔗 Starting artist → show linking process...\n');
-    console.log('─'.repeat(80));
+      // 2. Levenshtein fallback
+      const levenshteinMatches = allArtists
+        .map((artist) => ({
+          artist,
+          dist: levenshtein(showSlug, createSlug(artist.Artist_Slug)),
+        }))
+        .sort((a, b) => a.dist - b.dist)
+        .map((o) => o.artist);
 
-    // 5. Process each show
-    for (const show of allShows) {
-      try {
-        // Look up artist slug from CSV mapping
-        const artistSlugFromCsv = csvMapping.get(show.ShowSlug);
+      // 3. Merge intelligently
+      const combined = [
+        ...substringMatches,
+        ...levenshteinMatches.filter((a) => !substringMatches.includes(a)),
+      ];
 
-        // Skip if no artist slug in CSV
-        if (!artistSlugFromCsv || artistSlugFromCsv.trim() === '') {
-          console.log(`⏭️  Skip: "${show.ShowName}" (no artist slug in CSV)`);
-          noArtistSpecified++;
-          skippedNoArtist.push({
-            showName: show.ShowName,
-            showSlug: show.ShowSlug
-          });
+      // 4. Add alphabetical fallback
+      const alphabetical = allArtists
+        .filter((a) => !combined.includes(a))
+        .sort((a, b) => a.ArtistName.localeCompare(b.ArtistName));
+
+      const finalSuggestions = [...combined, ...alphabetical].slice(0, 7);
+
+      console.log("\n📌 Suggestions:");
+      finalSuggestions.forEach((artist, idx) =>
+        console.log(`${idx + 1}. ${artist.ArtistName} (${artist.Artist_Slug})`)
+      );
+      console.log("8. Enter Artist_Slug manually");
+      console.log("0. Skip");
+
+      if (!INTERACTIVE) {
+        console.log("⏭️ Skipping (not interactive)");
+        skipped++;
+        continue;
+      }
+
+      const choice = await ask("\nSelect an option (1-8, 0 to skip): ");
+
+      if (choice === "0" || choice === "") {
+        console.log("⏭️ Skipped.");
+        skipped++;
+        continue;
+      }
+
+      let selectedArtist = null;
+
+      if (choice === "8") {
+        const manualSlug = await ask("Enter Artist_Slug: ");
+
+        if (!artistMap.has(manualSlug)) {
+          console.log("❌ Artist not found — skipping.");
+          skipped++;
           continue;
         }
 
-        // Skip if show already has this artist linked
-        const existingHosts = show.Main_Host || [];
-        const alreadyHasArtist = existingHosts.some(
-          host => host.Artist_Slug === artistSlugFromCsv
-        );
-
-        if (alreadyHasArtist) {
-          console.log(`⏭️  Skip: "${show.ShowName}" (already linked to artist)`);
-          alreadyLinked++;
+        selectedArtist = artistMap.get(manualSlug);
+      } else {
+        const index = parseInt(choice, 10) - 1;
+        if (index < 0 || index >= finalSuggestions.length) {
+          console.log("❌ Invalid option — skipping.");
+          skipped++;
           continue;
         }
 
-        // Find matching artist by Artist_Slug from CSV
-        const matchedArtist = artistMap.get(artistSlugFromCsv);
+        selectedArtist = finalSuggestions[index];
+      }
 
-        if (!matchedArtist) {
-          console.log(`❌ Artist not found: "${artistSlugFromCsv}" for "${show.ShowName}"`);
-          artistNotFound++;
-          notFoundArtists.push({
-            showName: show.ShowName,
-            showSlug: show.ShowSlug,
-            artistSlug: artistSlugFromCsv
-          });
-          continue;
-        }
+      if (!selectedArtist) {
+        console.log("❌ No artist selected — skipped.");
+        skipped++;
+        continue;
+      }
 
-        // Get existing host IDs
-        const existingHostIds = existingHosts.map(host => host.id);
-
-        // Link artist to show (or simulate in dry-run mode)
-        if (DRY_RUN) {
-          console.log(`[DRY RUN] Would link: "${show.ShowName}" (${show.ShowSlug}) → "${matchedArtist.ArtistName}" (${matchedArtist.Artist_Slug})`);
-        } else {
-          // Add the new artist to existing hosts (many-to-many)
-          await strapi.db.query('api::show.show').update({
-            where: { id: show.id },
-            data: { Main_Host: [...existingHostIds, matchedArtist.id] }
-          });
-          console.log(`✅ Linked: "${show.ShowName}" (${show.ShowSlug}) → "${matchedArtist.ArtistName}" (${matchedArtist.Artist_Slug})`);
-        }
-
-        matched++;
-        matchedPairs.push({
-          showName: show.ShowName,
-          showSlug: show.ShowSlug,
-          artistName: matchedArtist.ArtistName,
-          artistSlug: matchedArtist.Artist_Slug
+      if (DRY_RUN) {
+        console.log(`[DRY RUN] Would link show → ${selectedArtist.ArtistName}`);
+      } else {
+        await strapi.db.query("api::show.show").update({
+          where: { id: show.id },
+          data: { Main_Host: [selectedArtist.id] },
         });
-
-      } catch (error) {
-        console.error(`⚠️  Error processing "${show.ShowName}":`, error.message);
-        errors++;
-      }
-    }
-
-    // 6. Print summary
-    console.log('\n' + '─'.repeat(80));
-    console.log('\n📊 SUMMARY\n');
-    console.log('─'.repeat(80));
-    console.log(`✅ Successfully ${DRY_RUN ? 'would link' : 'linked'}:     ${matched}`);
-    console.log(`⏭️  Already linked to artist:           ${alreadyLinked}`);
-    console.log(`⏭️  No artist specified in CSV:         ${noArtistSpecified}`);
-    console.log(`❌ Artist not found in database:       ${artistNotFound}`);
-    console.log(`⚠️  Errors:                            ${errors}`);
-    console.log(`📺 Total shows processed:              ${allShows.length}`);
-    console.log('─'.repeat(80));
-
-    // 7. Show details for artists not found
-    if (notFoundArtists.length > 0) {
-      console.log('\n⚠️  ARTISTS NOT FOUND IN DATABASE:\n');
-
-      // Get unique artist slugs
-      const uniqueArtistSlugs = [...new Set(notFoundArtists.map(item => item.artistSlug))];
-
-      uniqueArtistSlugs.slice(0, 20).forEach(artistSlug => {
-        const showCount = notFoundArtists.filter(item => item.artistSlug === artistSlug).length;
-        console.log(`   • "${artistSlug}" (${showCount} show${showCount > 1 ? 's' : ''})`);
-      });
-
-      if (uniqueArtistSlugs.length > 20) {
-        console.log(`   ... and ${uniqueArtistSlugs.length - 20} more artists`);
+        console.log(`✅ Linked: ${show.ShowName} → ${selectedArtist.ArtistName}`);
       }
 
-      console.log('\n💡 Tip: Create these artists in the database first, then re-run this script.');
+      linked++;
     }
 
-    // 8. Show shows with no artist specified
-    if (skippedNoArtist.length > 0 && skippedNoArtist.length <= 10) {
-      console.log('\n⏭️  SHOWS WITH NO ARTIST SPECIFIED IN CSV:\n');
-      skippedNoArtist.forEach(({ showName }) => {
-        console.log(`   • "${showName}"`);
-      });
-    } else if (skippedNoArtist.length > 10) {
-      console.log(`\n⏭️  ${skippedNoArtist.length} shows have no artist specified in CSV`);
-    }
+    console.log("\n" + "─".repeat(80));
+    console.log("📊 SUMMARY");
+    console.log(`✓ Linked: ${linked}`);
+    console.log(`⏭️ Skipped: ${skipped}`);
+    console.log("─".repeat(80));
 
-    // 9. Verify final state (only if not dry run)
-    if (!DRY_RUN && !TEST_LIMIT) {
-      console.log('\n🔍 Verifying results...');
-      const showsWithArtists = await strapi.db.query('api::show.show').count({
-        where: { Main_Host: { $notNull: true } }
-      });
-      console.log(`✓ Total shows with main hosts: ${showsWithArtists}\n`);
-    }
-
-    console.log('✨ Process complete!\n');
-
-    if (DRY_RUN) {
-      console.log('💡 To run for real, unset DRY_RUN:');
-      console.log('   delete process.env.DRY_RUN');
-      console.log('   await require(\'./scripts/link-artists-to-shows.js\')(strapi)\n');
-    }
-
-    return { success: true };
-
-  } catch (error) {
-    console.error('\n❌ Fatal error during artist → show linking:', error);
-    throw error;
+    if (DRY_RUN) console.log("💡 DRY RUN complete — no changes saved.");
+  } catch (err) {
+    console.error("❌ Fatal error:", err);
   }
 };

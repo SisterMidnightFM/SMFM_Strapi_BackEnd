@@ -552,45 +552,11 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     StaffPick: Schema.Attribute.Boolean;
     StaffPickComments: Schema.Attribute.String;
     tag_genres: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
-    tag_mood_vibes: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::mood-vibe-tag.mood-vibe-tag'
-    >;
     tag_themes: Schema.Attribute.Relation<
       'manyToMany',
       'api::tag-theme.tag-theme'
     >;
     Tracklist: Schema.Attribute.Component<'tracks.track-list', true>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
-export interface ApiMoodVibeTagMoodVibeTag extends Struct.CollectionTypeSchema {
-  collectionName: 'mood_vibe_tags';
-  info: {
-    description: '';
-    displayName: 'Tag_MoodVibe';
-    pluralName: 'mood-vibe-tags';
-    singularName: 'mood-vibe-tag';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    episodes: Schema.Attribute.Relation<'manyToMany', 'api::episode.episode'>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::mood-vibe-tag.mood-vibe-tag'
-    > &
-      Schema.Attribute.Private;
-    Mood_or_Vibe: Schema.Attribute.String;
-    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -627,37 +593,6 @@ export interface ApiNewsNews extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiScheduleSchedule extends Struct.CollectionTypeSchema {
-  collectionName: 'schedules';
-  info: {
-    displayName: 'Schedule';
-    pluralName: 'schedules';
-    singularName: 'schedule';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    Date: Schema.Attribute.Date &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::schedule.schedule'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    Show_Slots: Schema.Attribute.Component<'show-slots.shows', true>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiShowShow extends Struct.CollectionTypeSchema {
   collectionName: 'shows';
   info: {
@@ -670,20 +605,6 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    Broadcast_Day: Schema.Attribute.Enumeration<
-      [
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-        'Sunday',
-      ]
-    >;
-    Broadcast_IsRepeat: Schema.Attribute.Boolean;
-    Broadcast_RepeatEvery_Weeks: Schema.Attribute.Integer &
-      Schema.Attribute.DefaultTo<4>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1311,9 +1232,7 @@ declare module '@strapi/strapi' {
       'api::about-page.about-page': ApiAboutPageAboutPage;
       'api::artist.artist': ApiArtistArtist;
       'api::episode.episode': ApiEpisodeEpisode;
-      'api::mood-vibe-tag.mood-vibe-tag': ApiMoodVibeTagMoodVibeTag;
       'api::news.news': ApiNewsNews;
-      'api::schedule.schedule': ApiScheduleSchedule;
       'api::show.show': ApiShowShow;
       'api::tag-location.tag-location': ApiTagLocationTagLocation;
       'api::tag-theme.tag-theme': ApiTagThemeTagTheme;

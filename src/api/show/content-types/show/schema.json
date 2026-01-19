@@ -22,45 +22,6 @@
       "targetField": "ShowName",
       "required": true
     },
-    "Broadcast_IsRepeat": {
-      "type": "boolean"
-    },
-    "Broadcast_Day": {
-      "type": "enumeration",
-      "conditions": {
-        "visible": {
-          "==": [
-            {
-              "var": "Broadcast_IsRepeat"
-            },
-            true
-          ]
-        }
-      },
-      "enum": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday"
-      ]
-    },
-    "Broadcast_RepeatEvery_Weeks": {
-      "type": "integer",
-      "conditions": {
-        "visible": {
-          "==": [
-            {
-              "var": "Broadcast_IsRepeat"
-            },
-            true
-          ]
-        }
-      },
-      "default": 4
-    },
     "ShowDescription": {
       "type": "blocks",
       "required": false
