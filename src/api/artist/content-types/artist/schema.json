@@ -27,6 +27,9 @@
       "private": true,
       "unique": false
     },
+    "ArtistEmail2": {
+      "type": "email"
+    },
     "ArtistInstagram": {
       "type": "string"
     },

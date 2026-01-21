@@ -42,7 +42,7 @@
     "MixCloudLink": {
       "type": "string",
       "required": true,
-      "unique": true
+      "unique": false
     },
     "Tracklist": {
       "type": "component",
@@ -51,7 +51,7 @@
     },
     "EpisodeDescription": {
       "type": "text",
-      "required": true
+      "required": false
     },
     "StaffPick": {
       "type": "boolean"

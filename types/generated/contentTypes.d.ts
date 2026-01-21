@@ -474,6 +474,7 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
     Artist_Slug: Schema.Attribute.UID<'ArtistName'> & Schema.Attribute.Required;
     ArtistBio: Schema.Attribute.Text;
     ArtistEmail: Schema.Attribute.Email & Schema.Attribute.Private;
+    ArtistEmail2: Schema.Attribute.Email;
     ArtistImage: Schema.Attribute.Media<'images' | 'files'>;
     ArtistInstagram: Schema.Attribute.String;
     ArtistName: Schema.Attribute.String & Schema.Attribute.Required;
@@ -525,7 +526,7 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    EpisodeDescription: Schema.Attribute.Text & Schema.Attribute.Required;
+    EpisodeDescription: Schema.Attribute.Text;
     EpisodeImage: Schema.Attribute.Media<'images' | 'files'>;
     EpisodeSlug: Schema.Attribute.UID<'EpisodeTitle'> &
       Schema.Attribute.Required;
@@ -544,9 +545,7 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       'api::episode.episode'
     > &
       Schema.Attribute.Private;
-    MixCloudLink: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
+    MixCloudLink: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     SoundcloudLink: Schema.Attribute.String & Schema.Attribute.Required;
     StaffPick: Schema.Attribute.Boolean;
