@@ -32,8 +32,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     });
 
     if (!episode) return;
-    if (episode.HostNotificationSent) {
-      strapi.log.info(`host-notification: skipping ${documentId} — already marked as sent`);
+    if (!episode.SendHostEmail) {
+      strapi.log.info(`host-notification: skipping ${documentId} — SendHostEmail is unticked`);
       return;
     }
 
@@ -91,10 +91,11 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     });
 
     if (results.some((r) => r.status === 'fulfilled')) {
-      // afterUpdate skips this write via its HostNotificationSent guard
+      // Untick the box after sending so later saves don't re-email.
+      // afterUpdate skips this write via its SendHostEmail=false guard.
       await strapi.db.query(EPISODE_UID).update({
         where: { documentId },
-        data: { HostNotificationSent: true },
+        data: { SendHostEmail: false },
       });
       strapi.log.info(
         `host-notification: emailed ${recipients.length} host(s) for episode ${documentId}`

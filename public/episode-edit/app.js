@@ -48,6 +48,57 @@
     $('tracklist').appendChild(row);
   }
 
+  var GENRES_PREVIEW_COUNT = 8;
+  var genresExpanded = false;
+
+  function updateGenreVisibility() {
+    var labels = Array.prototype.slice.call(document.querySelectorAll('#genres label'));
+    var shown = 0;
+    labels.forEach(function (label) {
+      var checked = label.querySelector('input').checked;
+      // Selected genres are always visible; when collapsed, top up with
+      // the first few unselected ones so the list stays short.
+      var visible = genresExpanded || checked || shown < GENRES_PREVIEW_COUNT;
+      if (visible) shown++;
+      label.style.display = visible ? '' : 'none';
+    });
+    var btn = $('genres-toggle');
+    if (labels.length <= GENRES_PREVIEW_COUNT) {
+      btn.style.display = 'none';
+    } else {
+      btn.textContent = genresExpanded
+        ? 'Show fewer genres'
+        : 'Show all genres (' + labels.length + ')';
+    }
+  }
+
+  function renderGenres(allGenres, selectedIds) {
+    var selected = {};
+    selectedIds.forEach(function (id) { selected[id] = true; });
+
+    // Already-selected genres first, then the rest (both keep alphabetical order)
+    var ordered = allGenres
+      .filter(function (g) { return selected[g.documentId]; })
+      .concat(allGenres.filter(function (g) { return !selected[g.documentId]; }));
+
+    ordered.forEach(function (g) {
+      var label = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = g.documentId;
+      cb.checked = !!selected[g.documentId];
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(g.Genre || ''));
+      $('genres').appendChild(label);
+    });
+
+    $('genres-toggle').onclick = function () {
+      genresExpanded = !genresExpanded;
+      updateGenreVisibility();
+    };
+    updateGenreVisibility();
+  }
+
   function render(data) {
     var ep = data.episode;
     $('heading').textContent = 'Edit: ' + (ep.EpisodeTitle || 'Untitled episode');
@@ -67,18 +118,7 @@
       addTrackRow('', '');
     }
 
-    var selected = {};
-    (ep.tagGenreDocumentIds || []).forEach(function (id) { selected[id] = true; });
-    data.allGenres.forEach(function (g) {
-      var label = document.createElement('label');
-      var cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.value = g.documentId;
-      cb.checked = !!selected[g.documentId];
-      label.appendChild(cb);
-      label.appendChild(document.createTextNode(g.Genre || ''));
-      $('genres').appendChild(label);
-    });
+    renderGenres(data.allGenres, ep.tagGenreDocumentIds || []);
 
     $('loading').style.display = 'none';
     $('form').style.display = 'block';

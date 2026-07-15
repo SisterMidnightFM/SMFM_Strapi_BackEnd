@@ -535,9 +535,6 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::artist.artist'
     >;
-    HostNotificationSent: Schema.Attribute.Boolean &
-      Schema.Attribute.Private &
-      Schema.Attribute.DefaultTo<false>;
     link_episode_to_show: Schema.Attribute.Relation<
       'manyToOne',
       'api::show.show'
@@ -550,6 +547,9 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     MixCloudLink: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    SendHostEmail: Schema.Attribute.Boolean &
+      Schema.Attribute.Private &
+      Schema.Attribute.DefaultTo<true>;
     SoundcloudLink: Schema.Attribute.String & Schema.Attribute.Required;
     StaffPick: Schema.Attribute.Boolean;
     StaffPickComments: Schema.Attribute.String;

@@ -49,6 +49,7 @@
       cursor: pointer; padding: 4px 8px; line-height: 1;
     }
     .btn-remove:hover { color: #ff7b9c; }
+    .btn-toggle { margin-top: 10px; font-size: 14px; padding: 8px 14px; }
     .genres { display: flex; flex-wrap: wrap; gap: 8px; }
     .genres label {
       display: inline-flex; align-items: center; gap: 6px;
@@ -93,6 +94,7 @@
 
       <label>Genres <span class="hint">(select all that apply)</span></label>
       <div class="genres" id="genres"></div>
+      <button type="button" class="btn btn-secondary btn-toggle" id="genres-toggle">Show all genres</button>
 
       <div class="save-row">
         <button type="button" class="btn" id="save">Save changes</button>

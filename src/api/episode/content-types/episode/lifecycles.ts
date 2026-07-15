@@ -10,8 +10,10 @@ export default {
   },
 
   async afterUpdate(event) {
-    // Skip the flag-setting write made by the notification service itself
-    if (event.params?.data && 'HostNotificationSent' in event.params.data) return;
+    // Skip writes that untick the box (the notification service's own
+    // post-send write, or an admin turning emails off). A save with the
+    // box ticked means "send" — maybeSend re-checks and handles the rest.
+    if (event.params?.data?.SendHostEmail === false) return;
     const documentId = event.result?.documentId;
     if (!documentId) return;
     try {

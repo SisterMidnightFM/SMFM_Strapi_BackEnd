@@ -12,10 +12,10 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "HostNotificationSent": {
+    "SendHostEmail": {
       "type": "boolean",
       "private": true,
-      "default": false
+      "default": true
     },
     "EpisodeTitle": {
       "type": "string",
