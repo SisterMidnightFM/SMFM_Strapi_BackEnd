@@ -500,6 +500,9 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.Private &
       Schema.Attribute.DefaultTo<false>;
+    SendEditEmail: Schema.Attribute.Boolean &
+      Schema.Attribute.Private &
+      Schema.Attribute.DefaultTo<false>;
     tag_locations: Schema.Attribute.Relation<
       'manyToMany',
       'api::tag-location.tag-location'
@@ -616,6 +619,9 @@ export interface ApiShowShow extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     Main_Host: Schema.Attribute.Relation<'manyToMany', 'api::artist.artist'>;
     publishedAt: Schema.Attribute.DateTime;
+    SendEditEmail: Schema.Attribute.Boolean &
+      Schema.Attribute.Private &
+      Schema.Attribute.DefaultTo<false>;
     Show_Episodes: Schema.Attribute.Relation<
       'oneToMany',
       'api::episode.episode'

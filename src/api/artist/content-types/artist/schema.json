@@ -12,6 +12,11 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "SendEditEmail": {
+      "type": "boolean",
+      "private": true,
+      "default": false
+    },
     "ArtistName": {
       "type": "string",
       "required": true

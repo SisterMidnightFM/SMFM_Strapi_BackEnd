@@ -37,6 +37,8 @@ ${link}
 
 This link is valid for 30 days and only works for this episode.
 
+If there are any issues, please contact radio@sistermidnight.org.
+
 Thanks,
 Sister Midnight FM`;
 
@@ -46,5 +48,6 @@ export const html = ({ showName, broadcastDate, link }: TemplateVars) => `
   <p>Please use the link below to add or update the episode title, description, tracklist and genres:</p>
   <p><a href="${link}">Edit your episode details</a></p>
   <p>This link is valid for 30 days and only works for this episode.</p>
+  <p>If there are any issues, please contact <a href="mailto:radio@sistermidnight.org">radio@sistermidnight.org</a>.</p>
   <p>Thanks,<br/>Sister Midnight FM</p>
 `;

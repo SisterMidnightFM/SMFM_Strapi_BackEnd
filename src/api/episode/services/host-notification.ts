@@ -28,6 +28,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       documentId,
       populate: {
         link_episode_to_show: { populate: { Main_Host: true } },
+        guest_artists: true,
       },
     });
 
@@ -43,12 +44,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       return; // afterUpdate will retry once a show is linked
     }
 
-    const recipients = (show.Main_Host ?? [])
+    // Hosts + guest artists, de-duplicated so nobody gets two copies
+    const seen = new Set<string>();
+    const recipients = [...(show.Main_Host ?? []), ...(episode.guest_artists ?? [])]
       .map((artist) => artist.ArtistEmail || artist.ArtistEmail2)
-      .filter(Boolean);
+      .filter((email): email is string => {
+        if (!email || seen.has(email.toLowerCase())) return false;
+        seen.add(email.toLowerCase());
+        return true;
+      });
     if (recipients.length === 0) {
       strapi.log.info(
-        `host-notification: skipping ${documentId} — show "${show.ShowName}" has no host with an email address`
+        `host-notification: skipping ${documentId} — no host or guest artist has an email address`
       );
       return;
     }
