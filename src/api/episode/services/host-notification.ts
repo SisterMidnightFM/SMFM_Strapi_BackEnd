@@ -11,8 +11,10 @@ const EPISODE_UID = 'api::episode.episode';
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async maybeSend(documentId: string) {
-    if (process.env.EPISODE_EDIT_NOTIFY_ENABLED !== 'true') {
-      strapi.log.info('host-notification: EPISODE_EDIT_NOTIFY_ENABLED is not "true", skipping email');
+    // Notifications are ON by default; set EPISODE_EDIT_NOTIFY_ENABLED=false
+    // to pause them (e.g. during CSV bulk imports).
+    if (process.env.EPISODE_EDIT_NOTIFY_ENABLED === 'false') {
+      strapi.log.info('host-notification: EPISODE_EDIT_NOTIFY_ENABLED=false, skipping email');
       return;
     }
 
