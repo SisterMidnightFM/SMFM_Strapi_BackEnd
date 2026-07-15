@@ -56,6 +56,11 @@
     "StaffPick": {
       "type": "boolean"
     },
+    "HostNotificationSent": {
+      "type": "boolean",
+      "private": true,
+      "default": false
+    },
     "StaffPickComments": {
       "type": "string",
       "conditions": {

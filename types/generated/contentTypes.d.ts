@@ -535,6 +535,9 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::artist.artist'
     >;
+    HostNotificationSent: Schema.Attribute.Boolean &
+      Schema.Attribute.Private &
+      Schema.Attribute.DefaultTo<false>;
     link_episode_to_show: Schema.Attribute.Relation<
       'manyToOne',
       'api::show.show'

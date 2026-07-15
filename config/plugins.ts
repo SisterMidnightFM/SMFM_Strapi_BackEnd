@@ -1,4 +1,22 @@
-export default {
+export default ({ env }) => ({
+  email: {
+    config: {
+      provider: 'nodemailer',
+      providerOptions: {
+        host: env('SMTP_HOST', 'smtp.resend.com'),
+        port: env.int('SMTP_PORT', 465),
+        secure: true,
+        auth: {
+          user: env('SMTP_USERNAME', 'resend'),
+          pass: env('SMTP_PASSWORD'),
+        },
+      },
+      settings: {
+        defaultFrom: env('EMAIL_FROM'),
+        defaultReplyTo: env('EMAIL_REPLY_TO', env('EMAIL_FROM')),
+      },
+    },
+  },
   'strapi-csv-import-export': {
     config: {
       authorizedExports: [
@@ -27,4 +45,4 @@ export default {
       ],
     },
   },
-};
+});
