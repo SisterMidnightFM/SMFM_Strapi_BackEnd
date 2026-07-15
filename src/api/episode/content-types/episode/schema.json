@@ -12,6 +12,11 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "HostNotificationSent": {
+      "type": "boolean",
+      "private": true,
+      "default": false
+    },
     "EpisodeTitle": {
       "type": "string",
       "required": true
@@ -55,11 +60,6 @@
     },
     "StaffPick": {
       "type": "boolean"
-    },
-    "HostNotificationSent": {
-      "type": "boolean",
-      "private": true,
-      "default": false
     },
     "StaffPickComments": {
       "type": "string",

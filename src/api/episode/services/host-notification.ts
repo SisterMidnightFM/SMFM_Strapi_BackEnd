@@ -5,12 +5,16 @@
 
 import jwt from 'jsonwebtoken';
 import type { Core } from '@strapi/strapi';
+import * as template from './email-template';
 
 const EPISODE_UID = 'api::episode.episode';
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   async maybeSend(documentId: string) {
-    if (process.env.EPISODE_EDIT_NOTIFY_ENABLED !== 'true') return;
+    if (process.env.EPISODE_EDIT_NOTIFY_ENABLED !== 'true') {
+      strapi.log.info('host-notification: EPISODE_EDIT_NOTIFY_ENABLED is not "true", skipping email');
+      return;
+    }
 
     const secret = process.env.EPISODE_EDIT_JWT_SECRET;
     if (!secret) {
@@ -25,15 +29,27 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
     });
 
-    if (!episode || episode.HostNotificationSent) return;
+    if (!episode) return;
+    if (episode.HostNotificationSent) {
+      strapi.log.info(`host-notification: skipping ${documentId} — already marked as sent`);
+      return;
+    }
 
     const show = episode.link_episode_to_show;
-    if (!show) return; // no show linked yet; afterUpdate will retry
+    if (!show) {
+      strapi.log.info(`host-notification: skipping ${documentId} — no show linked yet`);
+      return; // afterUpdate will retry once a show is linked
+    }
 
     const recipients = (show.Main_Host ?? [])
       .map((artist) => artist.ArtistEmail || artist.ArtistEmail2)
       .filter(Boolean);
-    if (recipients.length === 0) return;
+    if (recipients.length === 0) {
+      strapi.log.info(
+        `host-notification: skipping ${documentId} — show "${show.ShowName}" has no host with an email address`
+      );
+      return;
+    }
 
     const token = jwt.sign({ documentId, purpose: 'episode-edit' }, secret, {
       expiresIn: '30d',
@@ -49,29 +65,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         })
       : 'TBC';
 
-    const subject = `New episode of ${show.ShowName} — add your episode details`;
-    const text = [
-      `Hi,`,
-      ``,
-      `A new episode of ${show.ShowName} (broadcast ${broadcastDate}) has been added to the Sister Midnight FM website.`,
-      ``,
-      `Please use the link below to add or update the episode title, description, tracklist and genres:`,
-      ``,
+    const vars = {
+      showName: show.ShowName,
+      episodeTitle: episode.EpisodeTitle,
+      broadcastDate,
       link,
-      ``,
-      `This link is valid for 30 days and only works for this episode.`,
-      ``,
-      `Thanks,`,
-      `Sister Midnight FM`,
-    ].join('\n');
-    const html = `
-      <p>Hi,</p>
-      <p>A new episode of <strong>${show.ShowName}</strong> (broadcast ${broadcastDate}) has been added to the Sister Midnight FM website.</p>
-      <p>Please use the link below to add or update the episode title, description, tracklist and genres:</p>
-      <p><a href="${link}">Edit your episode details</a></p>
-      <p>This link is valid for 30 days and only works for this episode.</p>
-      <p>Thanks,<br/>Sister Midnight FM</p>
-    `;
+    };
+    const subject = template.subject(vars);
+    const text = template.text(vars);
+    const html = template.html(vars);
 
     const results = await Promise.allSettled(
       recipients.map((to) =>
