@@ -306,7 +306,17 @@ const PanelContent = ({ documentId }: { documentId: string }) => {
  * stateful lives in PanelContent.
  */
 export const RadioCultPanel = (props: { model: string; documentId?: string }) => {
-  if (props.model !== EPISODE_MODEL || !props.documentId) return null;
+  if (props.model !== EPISODE_MODEL) return null;
+  if (!props.documentId) {
+    return {
+      title: 'Radio Cult',
+      content: (
+        <Typography textColor="neutral600">
+          Save the episode first — the audio upload button appears here once it's saved.
+        </Typography>
+      ),
+    };
+  }
   return {
     title: 'Radio Cult',
     content: <PanelContent documentId={props.documentId} />,

@@ -51,19 +51,23 @@
     },
     "RadioCultTrackId": {
       "type": "string",
-      "private": true
+      "private": true,
+      "visible": false
     },
     "RadioCultUploadedAt": {
       "type": "datetime",
-      "private": true
+      "private": true,
+      "visible": false
     },
     "RadioCultMixcloudRequestedAt": {
       "type": "datetime",
-      "private": true
+      "private": true,
+      "visible": false
     },
     "RadioCultSoundcloudRequestedAt": {
       "type": "datetime",
-      "private": true
+      "private": true,
+      "visible": false
     },
     "Tracklist": {
       "type": "component",
