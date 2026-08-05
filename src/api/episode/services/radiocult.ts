@@ -347,27 +347,29 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       .filter(Boolean);
     const artwork = await resolveArtwork(strapi, episode, MAX_PUBLISH_ARTWORK_BYTES);
 
-    // Multipart body, one field per option; array fields are appended once
-    // per value (same convention as the documented playlistIds example).
+    // Multipart body where every non-file field value is JSON-stringified
+    // individually (strings arrive quoted, tags as one JSON array) — this is
+    // the encoding shown in Radio Cult's own example code. Note that
+    // disableComments/hideStats/hosts are Mixcloud Pro-only and must not be
+    // sent to a regular account.
+    const json = (value: unknown) => JSON.stringify(value);
     const formData = new FormData();
     if (target === 'mixcloud') {
-      formData.append('name', episode.EpisodeTitle);
-      genreNames.slice(0, 5).forEach((tag) => formData.append('tags', tag)); // Mixcloud max 5
-      formData.append('description', DESCRIPTION);
+      formData.append('name', json(episode.EpisodeTitle));
+      formData.append('tags', json(genreNames.slice(0, 5))); // Mixcloud max 5
+      formData.append('description', json(DESCRIPTION));
       formData.append('unlisted', 'false');
-      formData.append('disableComments', 'false');
-      formData.append('hideStats', 'false');
       if (artwork) {
         formData.append('artwork', new Blob([artwork.buffer], { type: artwork.mime }), artwork.name);
       }
     } else {
-      formData.append('title', episode.EpisodeTitle);
-      genreNames.forEach((tag) => formData.append('tags', tag));
-      formData.append('description', DESCRIPTION);
-      formData.append('sharing', 'public');
+      formData.append('title', json(episode.EpisodeTitle));
+      formData.append('tags', json(genreNames));
+      formData.append('description', json(DESCRIPTION));
+      formData.append('sharing', json('public'));
       formData.append('downloadable', 'false');
       formData.append('commentable', 'true');
-      formData.append('embeddableBy', 'all');
+      formData.append('embeddableBy', json('all'));
       if (artwork) {
         formData.append('artworkData', new Blob([artwork.buffer], { type: artwork.mime }), artwork.name);
       }
