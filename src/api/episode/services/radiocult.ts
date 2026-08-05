@@ -44,6 +44,15 @@ export const DESCRIPTION = `A South East London based community run radio statio
 ➡️ More info, tune in: https://radio.sistermidnight.org/
 ➡️ Support us by becoming a member on Patreon`;
 
+const TRACK_ARTIST = 'Sister Midnight';
+
+/** Album name for a track: the broadcast month, e.g. "August 2026". */
+const albumFor = (episode: any): string =>
+  new Date(episode.BroadcastDateTime ?? Date.now()).toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+  });
+
 /** Error with an HTTP status the admin routes pass straight to the panel. */
 export class RcHttpError extends Error {
   constructor(
@@ -216,6 +225,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         try {
           embeddedTmpPath = await embedArtworkMp3(file.filepath, {
             title: episode.EpisodeTitle,
+            artist: TRACK_ARTIST,
+            album: albumFor(episode),
             imageBuffer: artwork.buffer,
             imageMime: artwork.mime,
           });
@@ -239,7 +250,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const formData = new FormData();
       const mime = ext === '.mp3' ? 'audio/mpeg' : 'audio/mp4';
       formData.append('stationMedia', await (fs as any).openAsBlob(uploadPath, { type: mime }), filename);
-      formData.append('metadata', JSON.stringify({ title: episode.EpisodeTitle, filename }));
+      formData.append(
+        'metadata',
+        JSON.stringify({
+          title: episode.EpisodeTitle,
+          filename,
+          artist: TRACK_ARTIST,
+          album: albumFor(episode),
+        })
+      );
 
       // No timeout: large files legitimately take a long time to transfer.
       const res = await rcFetch('/media/track', { method: 'POST', body: formData });

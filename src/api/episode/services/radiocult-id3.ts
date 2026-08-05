@@ -43,10 +43,12 @@ async function existingTagLength(filePath: string): Promise<number> {
  */
 export async function embedArtworkMp3(
   srcPath: string,
-  opts: { title: string; imageBuffer: Buffer; imageMime: string }
+  opts: { title: string; artist: string; album: string; imageBuffer: Buffer; imageMime: string }
 ): Promise<string> {
   const tagBuffer = NodeID3.create({
     title: opts.title,
+    artist: opts.artist,
+    album: opts.album,
     image: {
       mime: opts.imageMime,
       type: { id: 3, name: 'front cover' },
