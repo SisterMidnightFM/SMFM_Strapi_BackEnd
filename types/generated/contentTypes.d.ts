@@ -548,12 +548,18 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       'api::episode.episode'
     > &
       Schema.Attribute.Private;
-    MixCloudLink: Schema.Attribute.String & Schema.Attribute.Required;
+    MixCloudLink: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    RadioCultMixcloudRequestedAt: Schema.Attribute.DateTime &
+      Schema.Attribute.Private;
+    RadioCultSoundcloudRequestedAt: Schema.Attribute.DateTime &
+      Schema.Attribute.Private;
+    RadioCultTrackId: Schema.Attribute.String & Schema.Attribute.Private;
+    RadioCultUploadedAt: Schema.Attribute.DateTime & Schema.Attribute.Private;
     SendHostEmail: Schema.Attribute.Boolean &
       Schema.Attribute.Private &
       Schema.Attribute.DefaultTo<true>;
-    SoundcloudLink: Schema.Attribute.String & Schema.Attribute.Required;
+    SoundcloudLink: Schema.Attribute.String;
     StaffPick: Schema.Attribute.Boolean;
     StaffPickComments: Schema.Attribute.String;
     tag_genres: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;

@@ -42,12 +42,28 @@
     },
     "SoundcloudLink": {
       "type": "string",
-      "required": true
+      "required": false
     },
     "MixCloudLink": {
       "type": "string",
-      "required": true,
+      "required": false,
       "unique": false
+    },
+    "RadioCultTrackId": {
+      "type": "string",
+      "private": true
+    },
+    "RadioCultUploadedAt": {
+      "type": "datetime",
+      "private": true
+    },
+    "RadioCultMixcloudRequestedAt": {
+      "type": "datetime",
+      "private": true
+    },
+    "RadioCultSoundcloudRequestedAt": {
+      "type": "datetime",
+      "private": true
     },
     "Tracklist": {
       "type": "component",

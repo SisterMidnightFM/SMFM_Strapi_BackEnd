@@ -10,6 +10,15 @@ export default {
   },
 
   async afterUpdate(event) {
+    // Keep the Radio Cult track title in step with EpisodeTitle. Must run
+    // before the SendHostEmail guard below — normal admin saves include
+    // SendHostEmail:false in the payload and would skip it otherwise.
+    try {
+      await strapi.service('api::episode.radiocult').maybeSyncTitle(event);
+    } catch (error) {
+      strapi.log.error(`radiocult title sync afterUpdate failed: ${error}`);
+    }
+
     // Skip writes that untick the box (the notification service's own
     // post-send write, or an admin turning emails off). A save with the
     // box ticked means "send" — maybeSend re-checks and handles the rest.
