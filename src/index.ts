@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import type { Core } from '@strapi/strapi';
+import radiocultAdminRoutes from './radiocult/admin-routes';
 
 export default {
   /**
@@ -7,7 +9,17 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register({ strapi }: { strapi: Core.Strapi }) {
+    // Admin-authenticated endpoints backing the Radio Cult panel on the
+    // episode edit page (src/api routes can only ever be content-api typed).
+    strapi.server.routes(radiocultAdminRoutes);
+
+    if (typeof (fs as any).openAsBlob !== 'function') {
+      strapi.log.warn(
+        'radiocult: fs.openAsBlob is unavailable (Node < 20) — episode uploads to Radio Cult will fail. Set NODE_VERSION=22.'
+      );
+    }
+  },
 
   /**
    * An asynchronous bootstrap function that runs before

@@ -40,14 +40,77 @@
         "files"
       ]
     },
+    "UploadManually": {
+      "type": "boolean",
+      "private": true,
+      "default": false
+    },
     "SoundcloudLink": {
       "type": "string",
-      "required": true
+      "required": false,
+      "conditions": {
+        "visible": {
+          "or": [
+            {
+              "==": [
+                {
+                  "var": "UploadManually"
+                },
+                true
+              ]
+            },
+            {
+              "!!": {
+                "var": "SoundcloudLink"
+              }
+            }
+          ]
+        }
+      }
     },
     "MixCloudLink": {
       "type": "string",
-      "required": true,
-      "unique": false
+      "required": false,
+      "unique": false,
+      "conditions": {
+        "visible": {
+          "or": [
+            {
+              "==": [
+                {
+                  "var": "UploadManually"
+                },
+                true
+              ]
+            },
+            {
+              "!!": {
+                "var": "MixCloudLink"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RadioCultTrackId": {
+      "type": "string",
+      "private": true,
+      "visible": false
+    },
+    "RadioCultUploadedAt": {
+      "type": "datetime",
+      "private": true,
+      "visible": false
+    },
+    "RadioCultMixcloudRequestedAt": {
+      "type": "datetime",
+      "private": true,
+      "visible": false
+    },
+    "RadioCultSoundcloudRequestedAt": {
+      "type": "datetime",
+      "private": true,
+      "visible": false
     },
     "Tracklist": {
       "type": "component",

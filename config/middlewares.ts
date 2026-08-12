@@ -7,7 +7,15 @@ export default ({ env }) => [
   'strapi::cors',
   'strapi::poweredBy',
   'strapi::query',
-  'strapi::body',
+  {
+    name: 'strapi::body',
+    config: {
+      formidable: {
+        // Radio Cult accepts tracks up to 750MB; formidable's default is 200MB
+        maxFileSize: 800 * 1024 * 1024,
+      },
+    },
+  },
   {
     name: 'strapi::session',
     config: {
