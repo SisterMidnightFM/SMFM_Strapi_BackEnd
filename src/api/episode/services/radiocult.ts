@@ -88,7 +88,11 @@ async function rcFetch(
   init: RequestInit = {},
   timeoutMs?: number
 ): Promise<Response> {
+  const method = init.method ?? 'GET';
   if (Date.now() < rateLimitedUntil) {
+    strapi.log.warn(
+      `radiocult api: ${method} ${pathname} skipped — rate limited until ${new Date(rateLimitedUntil).toISOString()}`
+    );
     throw new RcHttpError(
       429,
       `Radio Cult rate limit hit — try again after ${new Date(rateLimitedUntil).toLocaleTimeString('en-GB')}`
@@ -102,11 +106,15 @@ async function rcFetch(
       signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
     });
   } catch (error: any) {
+    strapi.log.error(`radiocult api: ${method} ${pathname} network failure: ${error?.stack ?? error}`);
     throw new RcHttpError(502, `Could not reach Radio Cult: ${error?.message ?? error}`);
   }
   if (res.status === 429) {
     const retryAfter = Number(res.headers.get('retry-after')) || 60;
     rateLimitedUntil = Date.now() + retryAfter * 1000;
+    strapi.log.warn(
+      `radiocult api: ${method} ${pathname} → 429, backing off ${retryAfter}s (until ${new Date(rateLimitedUntil).toISOString()})`
+    );
     throw new RcHttpError(
       429,
       `Radio Cult rate limit hit — try again after ${new Date(rateLimitedUntil).toLocaleTimeString('en-GB')}`
@@ -114,11 +122,29 @@ async function rcFetch(
   }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
+    strapi.log.error(`radiocult api: ${method} ${pathname} → ${res.status}: ${body.slice(0, 1000)}`);
+    if (res.status === 402) {
+      // Radio Cult's docs say 402 = "the key and request are both fine, but the
+      // station cannot use that endpoint on its current plan". That is NOT what
+      // is happening on the Mixcloud publish endpoint: it 402s with
+      // {"error":"Internal server error"} before it validates anything (an
+      // empty body and a non-existent track id both 402 identically), while
+      // every other Connect endpoint on the same key and plan — track upload,
+      // SoundCloud publish — works. So it's a fault on their side, not ours.
+      const isMixcloudPublish = pathname.endsWith('/upload/mixcloud');
+      throw new RcHttpError(
+        402,
+        isMixcloudPublish
+          ? `Radio Cult's Mixcloud publish endpoint is broken — it answers 402 "${body.slice(0, 120)}" no matter what is sent (verified with an empty request and a made-up track id), while SoundCloud publishing on the same key and plan works. Nothing here can fix it. Publish this one by hand in the Radio Cult dashboard (Media → the track → Actions → Upload to Mixcloud) — the link will still land on the episode automatically — and report the endpoint to Radio Cult support.`
+          : `Radio Cult refused with 402: ${body.slice(0, 200)}. Per Radio Cult's docs this means the station's plan doesn't cover this endpoint — third-party publishing needs Premium/Business or the Connect add-on.`
+      );
+    }
     throw new RcHttpError(
       res.status >= 500 ? 502 : res.status,
       `Radio Cult responded ${res.status}: ${body.slice(0, 300)}`
     );
   }
+  strapi.log.debug(`radiocult api: ${method} ${pathname} → ${res.status}`);
   return res;
 }
 
@@ -168,6 +194,31 @@ async function resolveArtwork(
   return null;
 }
 
+/**
+ * Summary of the episode image for the uploader page: preview URL plus
+ * whether a jpeg/png variant small enough for SoundCloud's 2MB limit exists.
+ */
+function describeImage(episode: any) {
+  const image = episode?.EpisodeImage;
+  if (!image?.url) return null;
+  const usable = [image.formats?.large, image.formats?.medium, image]
+    .filter(Boolean)
+    .some((candidate: any) => {
+      const mime = candidate.mime ?? image.mime;
+      if (mime !== 'image/jpeg' && mime !== 'image/png') return false;
+      return !candidate.size || candidate.size * 1024 <= MAX_PUBLISH_ARTWORK_BYTES;
+    });
+  return {
+    name: image.name ?? 'episode image',
+    previewUrl: image.formats?.small?.url ?? image.formats?.thumbnail?.url ?? image.url,
+    usable,
+  };
+}
+
+/** Trimmed string or undefined — treats '', null and non-strings as absent. */
+const cleanString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
 function platformState(episode: any, platform: Platform) {
   const link = episode[LINK_FIELD[platform]];
   const requestedAt = episode[REQUESTED_FIELD[platform]];
@@ -180,12 +231,40 @@ function platformState(episode: any, platform: Platform) {
   return { state, requestedAt: requestedAt ?? null, link: link ?? null };
 }
 
+/**
+ * Whether we should look for this platform's URL on the Radio Cult track.
+ * Covers publishes we requested *and* publishes done by hand in the Radio Cult
+ * dashboard (no RequestedAt stamp) — that's the fallback route while Radio
+ * Cult's Mixcloud publish endpoint is broken, and the link still has to land on
+ * the episode. Limited to recently uploaded tracks so idle sweeps stay free.
+ */
+function awaitingLink(episode: any, platform: Platform): boolean {
+  if (episode[LINK_FIELD[platform]]) return false;
+  const { state } = platformState(episode, platform);
+  if (state === 'publishing') return true;
+  if (state !== 'not_published') return false;
+  const uploadedAt = episode.RadioCultUploadedAt;
+  return !!uploadedAt && Date.now() - new Date(uploadedAt).getTime() < STALLED_AFTER_MS;
+}
+
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * Receives the browser upload (a formidable temp file), embeds artwork for
    * mp3s, forwards the file to Radio Cult and stores the returned track id.
+   * `meta` carries the (possibly edited) details from the uploader page;
+   * anything missing falls back to the episode's own values.
    */
-  async uploadTrack({ documentId, file, force }: { documentId: string; file: any; force: boolean }) {
+  async uploadTrack({
+    documentId,
+    file,
+    force,
+    meta = {},
+  }: {
+    documentId: string;
+    file: any;
+    force: boolean;
+    meta?: { title?: string; artist?: string; album?: string };
+  }) {
     assertConfigured();
     if (typeof (fs as any).openAsBlob !== 'function') {
       throw new RcHttpError(501, 'Server Node version too old for uploads (needs Node 20+)');
@@ -215,6 +294,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       );
     }
 
+    const title = cleanString(meta.title) ?? episode.EpisodeTitle;
+    const artist = cleanString(meta.artist) ?? TRACK_ARTIST;
+    const album = cleanString(meta.album) ?? albumFor(episode);
+    strapi.log.info(
+      `radiocult: uploading "${filename}" (${Math.round(file.size / 1024 / 1024)}MB) for episode ${documentId} — title "${title}", artist "${artist}", album "${album}"${force ? ' (replacing existing track)' : ''}`
+    );
+
     const warnings: string[] = [];
     let uploadPath = file.filepath;
     let embeddedTmpPath: string | null = null;
@@ -224,9 +310,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       if (artwork) {
         try {
           embeddedTmpPath = await embedArtworkMp3(file.filepath, {
-            title: episode.EpisodeTitle,
-            artist: TRACK_ARTIST,
-            album: albumFor(episode),
+            title,
+            artist,
+            album,
             imageBuffer: artwork.buffer,
             imageMime: artwork.mime,
           });
@@ -250,15 +336,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const formData = new FormData();
       const mime = ext === '.mp3' ? 'audio/mpeg' : 'audio/mp4';
       formData.append('stationMedia', await (fs as any).openAsBlob(uploadPath, { type: mime }), filename);
-      formData.append(
-        'metadata',
-        JSON.stringify({
-          title: episode.EpisodeTitle,
-          filename,
-          artist: TRACK_ARTIST,
-          album: albumFor(episode),
-        })
-      );
+      formData.append('metadata', JSON.stringify({ title, filename, artist, album }));
 
       // No timeout: large files legitimately take a long time to transfer.
       const res = await rcFetch('/media/track', { method: 'POST', body: formData });
@@ -301,15 +379,18 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * Asks Radio Cult to publish the episode's track to Mixcloud or SoundCloud.
    * Radio Cult transfers asynchronously; syncLinks picks up the URL later.
+   * `meta` carries the (possibly edited) details from the uploader page.
    */
   async publish({
     documentId,
     platform,
     force,
+    meta = {},
   }: {
     documentId: string;
     platform: string;
     force: boolean;
+    meta?: { title?: string; tags?: unknown; description?: string };
   }) {
     assertConfigured();
     if (!PLATFORMS.includes(platform as Platform)) {
@@ -342,10 +423,15 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       );
     }
 
-    const genreNames: string[] = (episode.tag_genres ?? [])
-      .map((tag: any) => tag.Genre)
-      .filter(Boolean);
+    const title = cleanString(meta.title) ?? episode.EpisodeTitle;
+    const description = cleanString(meta.description) ?? DESCRIPTION;
+    const tags: string[] = Array.isArray(meta.tags)
+      ? meta.tags.map((tag) => cleanString(tag)).filter((tag): tag is string => !!tag)
+      : (episode.tag_genres ?? []).map((tag: any) => tag.Genre).filter(Boolean);
     const artwork = await resolveArtwork(strapi, episode, MAX_PUBLISH_ARTWORK_BYTES);
+    strapi.log.info(
+      `radiocult: requesting ${target} publish of track ${trackId} (episode ${documentId}) — title "${title}", tags [${tags.join(', ')}], artwork ${artwork ? artwork.name : 'none'}${force ? ', forced' : ''}`
+    );
 
     // Multipart body where every non-file field value is JSON-stringified
     // individually (strings arrive quoted, tags as one JSON array) — this is
@@ -355,17 +441,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     const json = (value: unknown) => JSON.stringify(value);
     const formData = new FormData();
     if (target === 'mixcloud') {
-      formData.append('name', json(episode.EpisodeTitle));
-      formData.append('tags', json(genreNames.slice(0, 5))); // Mixcloud max 5
-      formData.append('description', json(DESCRIPTION));
-      formData.append('unlisted', 'false');
+      formData.append('name', json(title));
+      formData.append('tags', json(tags.slice(0, 5))); // Mixcloud max 5
+      formData.append('unlisted', json(false)); // required field per RC docs
+      formData.append('description', json(description));
       if (artwork) {
         formData.append('artwork', new Blob([artwork.buffer], { type: artwork.mime }), artwork.name);
       }
     } else {
-      formData.append('title', json(episode.EpisodeTitle));
-      formData.append('tags', json(genreNames));
-      formData.append('description', json(DESCRIPTION));
+      formData.append('title', json(title));
+      formData.append('tags', json(tags));
+      formData.append('description', json(description));
       formData.append('sharing', json('public'));
       formData.append('downloadable', 'false');
       formData.append('commentable', 'true');
@@ -413,7 +499,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     });
 
     const pending = episodes.filter((episode) =>
-      PLATFORMS.some((p) => platformState(episode, p).state === 'publishing')
+      PLATFORMS.some((p) => awaitingLink(episode, p))
     );
     if (pending.length === 0) return { updated: 0, pending: 0 };
 
@@ -439,9 +525,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       if (!track) continue;
       const data: Record<string, string | boolean> = {};
       for (const platform of PLATFORMS) {
-        const { state } = platformState(episode, platform);
         const url = track[RC_URL_FIELD[platform]];
-        if (state === 'publishing' && url) data[LINK_FIELD[platform]] = url;
+        if (url && awaitingLink(episode, platform)) data[LINK_FIELD[platform]] = url;
       }
       if (Object.keys(data).length > 0) {
         data.SendHostEmail = false; // keep the host-notification lifecycle quiet
@@ -458,17 +543,25 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     return { updated, pending: pending.length };
   },
 
-  /** Per-episode state for the admin panel. */
+  /**
+   * Per-episode state for the panel and the uploader page. Includes the
+   * episode details the uploader page prefills its editable form with.
+   */
   async getStatus(documentId: string, { refresh }: { refresh?: boolean } = {}) {
-    let episode = await strapi.db.query(EPISODE_UID).findOne({ where: { documentId } });
+    const loadEpisode = () =>
+      strapi.documents(EPISODE_UID).findOne({
+        documentId,
+        populate: { EpisodeImage: true, tag_genres: true, link_episode_to_show: true },
+      });
+    let episode: any = await loadEpisode();
     if (!episode) throw new RcHttpError(404, 'Episode not found');
 
     let rateLimitMessage: string | null = null;
-    const hasPending = PLATFORMS.some((p) => platformState(episode, p).state === 'publishing');
+    const hasPending = PLATFORMS.some((p) => awaitingLink(episode, p));
     if (episode.RadioCultTrackId && (hasPending || refresh)) {
       try {
         await this.syncLinks({ documentIds: [documentId], bypassCache: refresh });
-        episode = await strapi.db.query(EPISODE_UID).findOne({ where: { documentId } });
+        episode = await loadEpisode();
       } catch (error) {
         if (error instanceof RcHttpError && error.status === 429) rateLimitMessage = error.message;
         else throw error;
@@ -484,17 +577,74 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         soundcloud: platformState(episode, 'soundcloud'),
       },
       rateLimitMessage,
+      // Prefill values for the uploader page's editable form.
+      details: {
+        title: episode.EpisodeTitle ?? '',
+        // The show this episode belongs to — the uploader page uses it as the
+        // browser tab title so several open tabs stay tellable apart.
+        showName: episode.link_episode_to_show?.ShowName ?? '',
+        artist: TRACK_ARTIST,
+        album: albumFor(episode),
+        description: DESCRIPTION,
+        genres: (episode.tag_genres ?? []).map((tag: any) => tag.Genre).filter(Boolean),
+        image: describeImage(episode),
+      },
     };
   },
 
   /**
+   * Pushes edited title/artist/album to an already-uploaded Radio Cult track
+   * (the uploader page's "Save details to Radio Cult" button).
+   */
+  async updateTrackMetadata({
+    documentId,
+    meta,
+  }: {
+    documentId: string;
+    meta: { title?: string; artist?: string; album?: string };
+  }) {
+    assertConfigured();
+    const episode = await strapi.db.query(EPISODE_UID).findOne({ where: { documentId } });
+    if (!episode) throw new RcHttpError(404, 'Episode not found');
+    if (!episode.RadioCultTrackId) {
+      throw new RcHttpError(409, 'Upload the episode to Radio Cult first');
+    }
+
+    const data: Record<string, string> = {};
+    if (cleanString(meta.title)) data.title = cleanString(meta.title)!;
+    if (cleanString(meta.artist)) data.artist = cleanString(meta.artist)!;
+    if (cleanString(meta.album)) data.album = cleanString(meta.album)!;
+    if (Object.keys(data).length === 0) {
+      throw new RcHttpError(400, 'Nothing to update — title, artist and album are all empty');
+    }
+
+    await rcFetch(
+      `/media/track/${episode.RadioCultTrackId}`,
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(data),
+      },
+      60_000
+    );
+    strapi.log.info(
+      `radiocult: updated track ${episode.RadioCultTrackId} details for episode ${documentId} (${Object.keys(data).join(', ')})`
+    );
+    return { updated: Object.keys(data) };
+  },
+
+  /**
    * Lifecycle hook body: pushes a changed EpisodeTitle to the Radio Cult
-   * track. Never throws — an RC outage must not block saving an episode.
+   * track. Only fires when the title actually changed (beforeUpdate stashes
+   * the previous value) — the track title can be customised on the uploader
+   * page, and an unrelated episode save must not overwrite it.
    */
   async maybeSyncTitle(event: any) {
     if (!isEnabled() || !apiKey() || !stationId()) return;
     const title = event.params?.data?.EpisodeTitle;
     if (typeof title !== 'string' || !title.trim()) return;
+    const previousTitle = event.state?.radiocultPreviousTitle;
+    if (typeof previousTitle === 'string' && previousTitle === title) return;
     const documentId = event.result?.documentId;
     if (!documentId) return;
 

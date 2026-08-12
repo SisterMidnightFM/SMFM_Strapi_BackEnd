@@ -40,14 +40,57 @@
         "files"
       ]
     },
+    "UploadManually": {
+      "type": "boolean",
+      "private": true,
+      "default": false
+    },
     "SoundcloudLink": {
       "type": "string",
-      "required": false
+      "required": false,
+      "conditions": {
+        "visible": {
+          "or": [
+            {
+              "==": [
+                {
+                  "var": "UploadManually"
+                },
+                true
+              ]
+            },
+            {
+              "!!": {
+                "var": "SoundcloudLink"
+              }
+            }
+          ]
+        }
+      }
     },
     "MixCloudLink": {
       "type": "string",
       "required": false,
-      "unique": false
+      "unique": false,
+      "conditions": {
+        "visible": {
+          "or": [
+            {
+              "==": [
+                {
+                  "var": "UploadManually"
+                },
+                true
+              ]
+            },
+            {
+              "!!": {
+                "var": "MixCloudLink"
+              }
+            }
+          ]
+        }
+      }
     },
     "RadioCultTrackId": {
       "type": "string",

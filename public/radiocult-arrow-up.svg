@@ -1,0 +1,13 @@
+<!--
+  Uploader favicon. Arrow glyph is Feather Icons' "arrow-up" (MIT licence,
+  https://feathericons.com), on the uploader page's midnight/pink palette.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="8" fill="#150b2a" />
+  <g transform="translate(4 4)"
+     fill="none" stroke="#ff2e88" stroke-width="2.5"
+     stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5" />
+    <polyline points="5 12 12 5 19 12" />
+  </g>
+</svg>
