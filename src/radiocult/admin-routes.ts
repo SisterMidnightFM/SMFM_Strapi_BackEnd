@@ -1,5 +1,5 @@
 /**
- * Admin-only endpoints for the Radio Cult uploader page (and the episode
+ * Admin-only endpoints for the Episode Uploader page (and the episode
  * edit-view side panel that links to it). Registered with type 'admin' in
  * src/index.ts, which makes Strapi require a valid admin session (Bearer JWT)
  * on every call — no config needed here.

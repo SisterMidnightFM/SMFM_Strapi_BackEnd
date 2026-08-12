@@ -118,7 +118,7 @@
       if (data.rateLimitMessage) log('warn', data.rateLimitMessage);
       // Tab title: "↑<show name>", so a row of open uploader tabs is readable.
       const tabName = (data.details && (data.details.showName || data.details.title)) || '';
-      document.title = tabName ? '↑' + tabName : '↑ Episode uploader';
+      document.title = tabName ? '↑' + tabName : '↑ Episode Uploader';
       render();
       return data;
     } catch (e) {
@@ -483,7 +483,7 @@
   function boot() {
     if (!documentId) {
       showNotice('No episode selected',
-        'Open this page with the "Open Radio Cult uploader" button on an episode’s edit page in the Strapi admin.');
+        'Open this page with the "Open Episode Uploader" button on an episode’s edit page in the Strapi admin.');
       return;
     }
     token = readToken();

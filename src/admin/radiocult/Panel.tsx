@@ -151,7 +151,7 @@ const PanelContent = ({ documentId }: { documentId: string }) => {
         </>
       )}
       <Button fullWidth onClick={() => window.open(uploaderHref, '_blank', 'noopener')}>
-        Open Episode uploader
+        Open Episode Uploader
       </Button>
       {status?.trackId ? (
         <Button
