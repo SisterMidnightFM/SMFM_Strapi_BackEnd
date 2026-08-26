@@ -1,5 +1,4 @@
 import type { StrapiApp } from '@strapi/strapi/admin';
-import { RadioCultPanel } from './radiocult/Panel';
 
 const EPISODE_MODEL = 'api::episode.episode';
 
@@ -18,9 +17,5 @@ export default {
       },
     },
   },
-  bootstrap(app: StrapiApp) {
-    // apis is typed Record<string, unknown>; addEditViewSidePanel exists at runtime.
-    const contentManager = app.getPlugin('content-manager') as any;
-    contentManager.apis.addEditViewSidePanel([RadioCultPanel]);
-  },
+  bootstrap(_app: StrapiApp) {},
 };

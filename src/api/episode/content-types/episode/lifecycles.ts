@@ -1,3 +1,16 @@
+// Fields the Radio Cult Uploader plugin writes back on its own (via
+// strapi.db.query, which fires these database lifecycles). Such a write is
+// bookkeeping, not an editorial change, and must never trigger a host email
+// — the plugin is generic and knows nothing about SendHostEmail, so the
+// guard lives here. Keep in step with the plugin's link field mapping.
+const RADIOCULT_WRITTEN_FIELDS = ['SoundcloudLink', 'MixCloudLink'];
+
+const isRadiocultLinkWriteback = (data: unknown): boolean => {
+  if (!data || typeof data !== 'object') return false;
+  const keys = Object.keys(data as Record<string, unknown>);
+  return keys.length > 0 && keys.every((key) => RADIOCULT_WRITTEN_FIELDS.includes(key));
+};
+
 export default {
   async afterCreate(event) {
     const documentId = event.result?.documentId;
@@ -9,30 +22,9 @@ export default {
     }
   },
 
-  async beforeUpdate(event) {
-    // Stash the pre-save title so afterUpdate can tell whether it actually
-    // changed — the Radio Cult track title may be customised on the uploader
-    // page and must not be overwritten by unrelated episode saves.
-    if (typeof event.params?.data?.EpisodeTitle !== 'string') return;
-    try {
-      const current = await strapi.db
-        .query('api::episode.episode')
-        .findOne({ where: event.params.where, select: ['EpisodeTitle'] });
-      event.state.radiocultPreviousTitle = current?.EpisodeTitle ?? null;
-    } catch (error) {
-      strapi.log.warn(`radiocult beforeUpdate title stash failed: ${error}`);
-    }
-  },
-
   async afterUpdate(event) {
-    // Keep the Radio Cult track title in step with EpisodeTitle. Must run
-    // before the SendHostEmail guard below — normal admin saves include
-    // SendHostEmail:false in the payload and would skip it otherwise.
-    try {
-      await strapi.service('api::episode.radiocult').maybeSyncTitle(event);
-    } catch (error) {
-      strapi.log.error(`radiocult title sync afterUpdate failed: ${error}`);
-    }
+    // Skip the plugin's link write-backs (see above).
+    if (isRadiocultLinkWriteback(event.params?.data)) return;
 
     // Skip writes that untick the box (the notification service's own
     // post-send write, or an admin turning emails off). A save with the
