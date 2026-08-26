@@ -498,7 +498,6 @@ export interface ApiArtistArtist extends Struct.CollectionTypeSchema {
     Real_Name: Schema.Attribute.String & Schema.Attribute.Private;
     Resident: Schema.Attribute.Boolean &
       Schema.Attribute.Required &
-      Schema.Attribute.Private &
       Schema.Attribute.DefaultTo<false>;
     SendEditEmail: Schema.Attribute.Boolean &
       Schema.Attribute.Private &

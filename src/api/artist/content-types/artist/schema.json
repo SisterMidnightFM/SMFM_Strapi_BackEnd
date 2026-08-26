@@ -23,7 +23,6 @@
     },
     "Resident": {
       "type": "boolean",
-      "private": true,
       "required": true,
       "default": false
     },
