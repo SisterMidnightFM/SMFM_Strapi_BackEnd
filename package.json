@@ -29,7 +29,7 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
     "strapi-csv-import-export": "^0.0.6",
-    "strapi-plugin-radiocult-uploader": "^1.0.1",
+    "strapi-plugin-radiocult-uploader": "^1.0.2",
     "strapi-plugin-tablify": "^1.0.3",
     "styled-components": "^6.0.0"
   },
