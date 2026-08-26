@@ -550,12 +550,6 @@ export interface ApiEpisodeEpisode extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     MixCloudLink: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    RadioCultMixcloudRequestedAt: Schema.Attribute.DateTime &
-      Schema.Attribute.Private;
-    RadioCultSoundcloudRequestedAt: Schema.Attribute.DateTime &
-      Schema.Attribute.Private;
-    RadioCultTrackId: Schema.Attribute.String & Schema.Attribute.Private;
-    RadioCultUploadedAt: Schema.Attribute.DateTime & Schema.Attribute.Private;
     SendHostEmail: Schema.Attribute.Boolean &
       Schema.Attribute.Private &
       Schema.Attribute.DefaultTo<true>;
@@ -872,6 +866,50 @@ export interface PluginI18NLocale extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface PluginRadiocultUploaderTrackRecord
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'radiocult_track_records';
+  info: {
+    description: 'Bookkeeping for tracks uploaded to Radio Cult (managed by the Radio Cult Uploader plugin)';
+    displayName: 'Radio Cult Track Record';
+    pluralName: 'track-records';
+    singularName: 'track-record';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+    'content-type-builder': {
+      visible: false;
+    };
+  };
+  attributes: {
+    contentTypeUid: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    entryDocumentId: Schema.Attribute.String & Schema.Attribute.Required;
+    lastSyncedAt: Schema.Attribute.DateTime;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::radiocult-uploader.track-record'
+    > &
+      Schema.Attribute.Private;
+    mixcloudRequestedAt: Schema.Attribute.DateTime;
+    publishedAt: Schema.Attribute.DateTime;
+    soundcloudRequestedAt: Schema.Attribute.DateTime;
+    trackId: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    uploadedAt: Schema.Attribute.DateTime;
   };
 }
 
@@ -1257,6 +1295,7 @@ declare module '@strapi/strapi' {
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
+      'plugin::radiocult-uploader.track-record': PluginRadiocultUploaderTrackRecord;
       'plugin::review-workflows.workflow': PluginReviewWorkflowsWorkflow;
       'plugin::review-workflows.workflow-stage': PluginReviewWorkflowsWorkflowStage;
       'plugin::upload.file': PluginUploadFile;

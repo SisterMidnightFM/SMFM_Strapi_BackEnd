@@ -1,5 +1,3 @@
-import cronTasks from './cron-tasks';
-
 export default ({ env }) => ({
   host: env('HOST', '0.0.0.0'),
   port: env.int('PORT', 1337),
@@ -8,8 +6,8 @@ export default ({ env }) => ({
   app: {
     keys: env.array('APP_KEYS'),
   },
+  // The Radio Cult Uploader plugin registers its own link-sync cron task.
   cron: {
     enabled: env.bool('CRON_ENABLED', true),
-    tasks: cronTasks,
   },
 });
