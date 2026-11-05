@@ -1,0 +1,65 @@
+name: Deploy Strapi
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # adds a "Run workflow" button in the Actions tab
+
+concurrency:
+  group: deploy-strapi
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The admin panel calls Strapi on its own host, so URL is only needed for the build to run
+      - name: Build Strapi
+        run: npm run build
+        env:
+          NODE_ENV: production
+          URL: ${{ vars.STRAPI_URL }}
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+
+      # Match the server's code to this commit (.env, uploads and dist are untracked, so they're untouched).
+      # npm ci only runs when package-lock.json changed, which keeps most deploys to a quick restart.
+      - name: Update code and dependencies on server
+        run: |
+          ssh ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} '
+            set -e
+            cd ~/apps/strapi
+            git fetch -q origin
+            if git diff --quiet HEAD ${{ github.sha }} -- package-lock.json; then deps=same; else deps=changed; fi
+            git reset -q --hard ${{ github.sha }}
+            if [ "$deps" = changed ]; then echo "package-lock.json changed - running npm ci"; npm ci --no-audit --no-fund; else echo "Dependencies unchanged"; fi
+          '
+
+      - name: Upload build
+        run: rsync -az --delete dist/ ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}:apps/strapi/dist/
+
+      - name: Restart Strapi and wait for it
+        run: |
+          ssh ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} '
+            sudo -n systemctl restart strapi
+            for i in $(seq 1 36); do
+              curl -fsS -o /dev/null http://127.0.0.1:1337/_health && echo "Strapi is up" && exit 0
+              sleep 5
+            done
+            echo "Strapi did not come back - check: journalctl -u strapi -n 100"
+            exit 1
+          '
